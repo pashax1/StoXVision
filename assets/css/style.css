@@ -1,0 +1,166 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+}
+
+.auth-bg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.auth-box {
+    background: #1e293b;
+    padding: 30px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: none;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #3b82f6;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #2563eb;
+}
+
+a {
+    color: #60a5fa;
+}
+
+.error {
+    color: red;
+}
+
+/* ===== Landing Page ===== */
+
+.landing {
+    background: radial-gradient(circle at center, #0f172a, #020617);
+    overflow: hidden;
+    height: 100vh;
+}
+
+.hero {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    top: 30%;
+}
+
+.logo {
+    font-size: 60px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #38bdf8, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.tagline {
+    margin-top: 10px;
+    font-size: 18px;
+    color: #94a3b8;
+}
+
+.buttons {
+    margin-top: 30px;
+}
+
+.btn, .btn-outline {
+    padding: 12px 25px;
+    margin: 10px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn:hover {
+    background: #2563eb;
+}
+
+.btn-outline {
+    border: 2px solid #3b82f6;
+    color: #3b82f6;
+}
+
+.btn-outline:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+.quote {
+    margin-top: 40px;
+    font-style: italic;
+    color: #64748b;
+}
+
+/* Floating Stocks */
+
+.floating-container span {
+    position: absolute;
+    color: #00ffcc;
+    font-weight: bold;
+    animation: float 10s linear infinite;
+    opacity: 0.4;
+}
+
+@keyframes float {
+    from {
+        transform: translateY(100vh) rotate(0deg);
+    }
+    to {
+        transform: translateY(-10vh) rotate(360deg);
+    }
+}
+
+/* Dashboard */
+
+.dashboard-container {
+    text-align: center;
+    padding-top: 100px;
+}
+
+.search-box input {
+    padding: 12px;
+    width: 250px;
+    border-radius: 5px;
+    border: none;
+}
+
+.search-box button {
+    padding: 12px 20px;
+    background: #3b82f6;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.logout-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #60a5fa;
+}
