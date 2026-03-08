@@ -1,3 +1,6 @@
+# Sensitive configuration
+config/db.php
+
 # Environment-specific files
 .vscode/
 
