@@ -1,0 +1,10 @@
+# StoXVision Security & Navigation
+Options -Indexes
+
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Prevent viewing of includes and config
+    RewriteRule ^(config|includes|database)/ - [F,L]
+</IfModule>

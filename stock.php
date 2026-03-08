@@ -7,7 +7,7 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 $symbol = strtoupper($_GET["symbol"]) . ".NS";
-$apiKey = "X9Z985T648Z0Z750";
+$apiKey = "10NWX8N1H14BXDX8";
 
 $url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=$symbol&apikey=$apiKey";
 

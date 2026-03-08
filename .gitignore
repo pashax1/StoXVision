@@ -1,0 +1,9 @@
+# Environment-specific files
+.vscode/
+
+# Temporary files
+test_*.php
+tmp/
+
+# Logs
+*.log
