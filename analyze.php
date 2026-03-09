@@ -35,7 +35,7 @@ if(isset($_POST['symbol'])) {
     // Smart resolution: name/alias → NSE ticker (e.g. "Infosys" → "INFY.NS")
     $symbol = Stocks::resolve($symbol_raw);
     // Display name = clean ticker without exchange suffix
-    $display_name = preg_replace('/\.(NS|BO)$/i', '', $symbol);
+    $display_name = preg_replace('/\.(NS|BSE|BO)$/i', '', $symbol);
 
     $marketDataService = new MarketDataService($api_key);
     $reportService = new ReportService();
@@ -43,9 +43,14 @@ if(isset($_POST['symbol'])) {
 
     try {
         $raw_data = $marketDataService->getDailyTimeSeries($symbol);
+        
+        // SYNC: Re-fetch the potentially updated API key from config
+        $api_key = $config['api_key'];
+        
         $indicators = $marketDataService->calculateIndicators($raw_data["Time Series (Daily)"]);
         
-        // Fetch news sentiment
+        // Fetch news sentiment using the latest working key
+        $newsService = new NewsService($api_key);
         $news_data = $newsService->getNewsSentiment($symbol);
         
         $report = $reportService->generateReport($indicators, $symbol, $news_data);
@@ -88,12 +93,26 @@ include "includes/header.php";
 </a>
 
 <?php if (isset($apiError)): ?>
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 40px; border-radius: 24px; text-align: center;">
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 40px; border-radius: 24px; text-align: center; backdrop-filter: blur(10px);">
         <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ef4444; margin-bottom: 20px;"></i>
-        <h2>Something Went Wrong</h2>
-        <p><?php echo $apiError; ?></p>
-        <br>
-        <a href="dashboard.php" class="btn btn-primary" style="display: inline-block;">Try Another Symbol</a>
+        <h2>Data Fetching Interrupted</h2>
+        <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 20px auto;"><?php echo $apiError; ?></p>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <form method="POST" action="analyze.php">
+                <input type="hidden" name="symbol" value="<?php echo htmlspecialchars($symbol_raw); ?>">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-redo"></i> Retry Analysis
+                </button>
+            </form>
+            <a href="dashboard.php" class="btn btn-outline" style="width: auto;">
+                <i class="fas fa-search"></i> Try Another Stock
+            </a>
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--glass-border); padding-top: 20px;">
+            <p><i class="fas fa-info-circle"></i> <b>Tip:</b> If errors persist, the exchange might be under heavy load. Retrying usually uses a different data bridge.</p>
+        </div>
     </div>
 <?php else: ?>
     <div class="analysis-container">

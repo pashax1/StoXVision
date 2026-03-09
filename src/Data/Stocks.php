@@ -162,6 +162,10 @@ class Stocks {
             // ── Exchange Traded Products (Indices) ──────────────────────────────
             'NIFTY'          => ['symbol' => '^NSEI',         'name' => 'Nifty 50 Index',               'sector' => 'Index'],
             'SENSEX'         => ['symbol' => '^BSESN',        'name' => 'BSE Sensex Index',             'sector' => 'Index'],
+            'ASIANPAINT'     => ['symbol' => 'ASIANPAINT.BSE', 'name' => 'Asian Paints',                'sector' => 'Consumer Goods'],
+            'TITAN'          => ['symbol' => 'TITAN.BSE',      'name' => 'Titan Company',               'sector' => 'Consumer Goods'],
+            'GRASIM'         => ['symbol' => 'GRASIM.BSE',     'name' => 'Grasim Industries',           'sector' => 'Conglomerate'],
+            'UPL'            => ['symbol' => 'UPL.BSE',        'name' => 'UPL Ltd',                     'sector' => 'Chemicals'],
 
         ];
     }
@@ -209,6 +213,58 @@ class Stocks {
         usort($results, fn($a, $b) => $b['score'] - $a['score']);
 
         return array_slice($results, 0, $limit);
+    }
+
+    /**
+     * Returns a list of stocks in the Nifty 50 index.
+     * Note: This is a representative list for this application.
+     */
+    public static function getNifty50(): array {
+        $nifty50_keys = [
+            'RELIANCE', 'TCS', 'HDFCBANK', 'ICICIBANK', 'INFY', 
+            'HINDUNILVR', 'ITC', 'SBIN', 'BHARTIARTL', 'KOTAKBANK',
+            'LT', 'AXISBANK', 'BAJFINANCE', 'ASIANPAINT', 'MARUTI',
+            'SUNPHARMA', 'TITAN', 'HCLTECH', 'ADANIENT', 'TATAMOTORS',
+            'JSWSTEEL', 'NTPC', 'TATASTEEL', 'POWERGRID', 'M&M',
+            'ULTRACEMCO', 'ONGC', 'ADANIPORTS', 'NESTLEIND', 'GRASIM',
+            'BRITANNIA', 'COALINDIA', 'HDFCLIFE', 'SBILIFE', 'DRREDDY',
+            'BAJAJFINSV', 'WIPRO', 'CIPLA', 'TATASTAGE', 'DIVISLAB',
+            'BPCL', 'APOLLOHOSP', 'EICHERMOT', 'HEROMOTOCO', 'INDUSINDBK',
+            'TECHM', 'BAJAJ-AUTO', 'ADANIGREEN', 'UPL', 'SHREECEM'
+        ];
+        
+        $directory = self::getDirectory();
+        $results = [];
+        foreach ($nifty50_keys as $key) {
+            if (isset($directory[$key])) {
+                $results[] = $directory[$key];
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Returns a list of stocks in the BSE Sensex index.
+     * Note: This is a representative list for this application.
+     */
+    public static function getSensex(): array {
+        $sensex_keys = [
+            'RELIANCE', 'TCS', 'HDFCBANK', 'ICICIBANK', 'INFY',
+            'HINDUNILVR', 'ITC', 'SBIN', 'BHARTIARTL', 'KOTAKBANK',
+            'LT', 'AXISBANK', 'BAJFINANCE', 'ASIANPAINT', 'MARUTI',
+            'SUNPHARMA', 'TITAN', 'HCLTECH', 'TATAMOTORS', 'NTPC',
+            'TATASTEEL', 'POWERGRID', 'M&M', 'ULTRACEMCO', 'NESTLEIND',
+            'INDUSINDBK', 'TECHM', 'BAJAJ-AUTO', 'BAJAJFINSV', 'WIPRO'
+        ];
+        
+        $directory = self::getDirectory();
+        $results = [];
+        foreach ($sensex_keys as $key) {
+            if (isset($directory[$key])) {
+                $results[] = $directory[$key];
+            }
+        }
+        return $results;
     }
 
     /**

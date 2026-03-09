@@ -38,7 +38,7 @@ include "includes/header.php";
 
 <!-- Market Overview Cards -->
 <div class="market-overview">
-    <div class="market-card up" style="border-left: 4px solid var(--secondary);">
+    <a href="index_stocks.php?type=nifty50" class="market-card up" style="border-left: 4px solid var(--secondary); text-decoration: none; display: block; transition: transform 0.2s ease;">
         <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: 700; letter-spacing: 1px;">NIFTY 50</div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
             <h3 style="margin:0;"><?php echo $nifty_price; ?></h3>
@@ -46,8 +46,8 @@ include "includes/header.php";
                 <i class="fas fa-caret-up"></i> <?php echo $nifty_change; ?>
             </div>
         </div>
-    </div>
-    <div class="market-card up" style="border-left: 4px solid var(--secondary);">
+    </a>
+    <a href="index_stocks.php?type=sensex" class="market-card up" style="border-left: 4px solid var(--secondary); text-decoration: none; display: block; transition: transform 0.2s ease;">
         <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: 700; letter-spacing: 1px;">SENSEX</div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
             <h3 style="margin:0;"><?php echo $sensex_price; ?></h3>
@@ -55,7 +55,7 @@ include "includes/header.php";
                 <i class="fas fa-caret-up"></i> <?php echo $sensex_change; ?>
             </div>
         </div>
-    </div>
+    </a>
     <div class="market-card" style="border-left: 4px solid var(--accent);">
         <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: 700; letter-spacing: 1px;">TOP SECTOR</div>
         <h3 style="margin:0;">ENERGY</h3>
@@ -170,6 +170,12 @@ include "includes/header.php";
         if (!e.target.closest('.autocomplete-wrapper')) {
             dropdown.classList.remove('open');
         }
+    });
+
+    // Hover effect for index cards
+    document.querySelectorAll('.market-card').forEach(card => {
+        card.addEventListener('mouseenter', () => card.style.transform = 'translateY(-3px)');
+        card.addEventListener('mouseleave', () => card.style.transform = 'translateY(0)');
     });
 })();
 </script>

@@ -300,6 +300,42 @@ button:hover {
     color: var(--primary);
 }
 
+.nav-profile {
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    border-left: 1px solid var(--glass-border);
+    margin-left: 10px;
+}
+
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary) !important;
+}
+
+.nav-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+    transition: all 0.3s ease;
+    aspect-ratio: 1/1;
+}
+
+.nav-avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.profile-trigger:hover .nav-avatar {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
 .dashboard-container {
     padding: 120px 4% 40px;
     max-width: 1400px;
