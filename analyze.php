@@ -349,7 +349,10 @@ include "includes/header.php";
         },
         yaxis: {
             tooltip: { enabled: true },
-            labels: { style: { colors: '#94a3b8' } }
+            labels: { 
+                style: { colors: '#94a3b8' },
+                formatter: function (val) { return val.toFixed(2); }
+            }
         },
         grid: { borderColor: 'rgba(255,255,255,0.05)' }
     };
