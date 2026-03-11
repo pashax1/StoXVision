@@ -192,6 +192,7 @@ class MarketDataService {
      */
     public function calculateIndicators($time_series) {
         $dates = [];
+        $opens = [];
         $closes = [];
         $volumes = [];
         $highs = [];
@@ -201,6 +202,7 @@ class MarketDataService {
         foreach ($time_series as $date => $values) {
             if ($count == 50) break; // Get 50 days for EMA 50
             $dates[] = date("M d", strtotime($date));
+            $opens[] = floatval($values["1. open"]);
             $closes[] = floatval($values["4. close"]);
             $volumes[] = intval($values["5. volume"]);
             $highs[] = floatval($values["2. high"]);
@@ -210,6 +212,7 @@ class MarketDataService {
 
         // Reverse to chronological order for calculation
         $dates = array_reverse($dates);
+        $opens = array_reverse($opens);
         $closes = array_reverse($closes);
         $volumes = array_reverse($volumes);
         $highs = array_reverse($highs);
@@ -231,8 +234,12 @@ class MarketDataService {
         $ema_50 = $this->calculateEMA($closes, 50);
 
         return [
-            'dates' => array_slice($dates, -20), // Return last 20 for chart
-            'closes' => array_slice($closes, -20),
+            'dates' => array_slice($dates, -40), // Return last 40 for chart
+            'opens' => array_slice($opens, -40),
+            'highs' => array_slice($highs, -40),
+            'lows' => array_slice($lows, -40),
+            'closes' => array_slice($closes, -40),
+            'chart_volumes' => array_slice($volumes, -40),
             'latest_price' => $latest_price,
             'price_change' => $price_change,
             'price_change_pct' => $price_change_pct,

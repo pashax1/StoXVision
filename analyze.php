@@ -57,7 +57,11 @@ if(isset($_POST['symbol'])) {
 
         // Chart data
         $dates = $indicators['dates'];
+        $opens = $indicators['opens'];
+        $highs = $indicators['highs'];
+        $lows = $indicators['lows'];
         $closes = $indicators['closes'];
+        $chart_volumes = $indicators['chart_volumes'];
         $latest_price = $indicators['latest_price'];
         $price_change = $indicators['price_change'];
         $price_change_pct = $indicators['price_change_pct'];
@@ -83,7 +87,7 @@ if(isset($_POST['symbol'])) {
 
 $pageTitle = "Analysis: " . ($display_name ?? $symbol_raw) . " | StoXVision AI";
 $currentPage = "analysis";
-$extraHead = '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
+$extraHead = '<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>';
 
 include "includes/header.php";
 ?>
@@ -189,10 +193,11 @@ include "includes/header.php";
             <!-- Main Chart Area -->
             <div class="report-section chart-section glass">
                 <div class="chart-header">
-                    <h3><i class="fas fa-chart-area"></i> Price Action</h3>
+                    <h3><i class="fas fa-chart-area"></i> Price Action & Volume</h3>
                 </div>
-                <div class="chart-container">
-                    <canvas id="stockChart"></canvas>
+                <div class="chart-container" style="display: flex; flex-direction: column; width: 100%;">
+                    <div id="stockChart" style="min-height: 350px;"></div>
+                    <div id="volumeChart" style="min-height: 150px; margin-top: -20px;"></div>
                 </div>
             </div>
 
@@ -298,37 +303,96 @@ include "includes/header.php";
 
     <script>
     <?php if (!empty($dates) && !empty($closes)): ?>
-    const ctx = document.getElementById('stockChart').getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
-    gradient.addColorStop(1, 'rgba(14, 165, 233, 0)');
+    var dates = <?php echo json_encode($dates); ?>;
+    var opens = <?php echo json_encode($opens); ?>;
+    var highs = <?php echo json_encode($highs); ?>;
+    var lows = <?php echo json_encode($lows); ?>;
+    var closes = <?php echo json_encode($closes); ?>;
+    var volumes = <?php echo json_encode($chart_volumes); ?>;
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: <?php echo json_encode($dates); ?>,
-            datasets: [{
-                label: 'Price',
-                data: <?php echo json_encode($closes); ?>,
-                borderColor: '#0ea5e9',
-                borderWidth: 3,
-                backgroundColor: gradient,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointBackgroundColor: '#0ea5e9'
-            }]
+    var candleData = [];
+    var volumeData = [];
+
+    for (var i = 0; i < dates.length; i++) {
+        candleData.push({
+            x: dates[i],
+            y: [opens[i], highs[i], lows[i], closes[i]]
+        });
+        volumeData.push({
+            x: dates[i],
+            y: volumes[i]
+        });
+    }
+
+    var optionsCandle = {
+        series: [{
+            name: 'Price',
+            data: candleData
+        }],
+        chart: {
+            type: 'candlestick',
+            height: 350,
+            id: 'candles',
+            toolbar: { show: false },
+            background: 'transparent',
+            fontFamily: 'inherit'
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } }
+        theme: { mode: 'dark' },
+        plotOptions: {
+            candlestick: {
+                colors: { upward: '#22c55e', downward: '#ef4444' }
             }
-        }
-    });
+        },
+        xaxis: {
+            type: 'category',
+            labels: { style: { colors: '#94a3b8' } }
+        },
+        yaxis: {
+            tooltip: { enabled: true },
+            labels: { style: { colors: '#94a3b8' } }
+        },
+        grid: { borderColor: 'rgba(255,255,255,0.05)' }
+    };
+
+    var chartCandle = new ApexCharts(document.querySelector("#stockChart"), optionsCandle);
+    chartCandle.render();
+
+    var optionsVolume = {
+        series: [{
+            name: 'Volume',
+            data: volumeData
+        }],
+        chart: {
+            height: 150,
+            type: 'bar',
+            brush: { enabled: true, target: 'candles' },
+            selection: {
+                enabled: true,
+                xaxis: { min: candleData[0].x, max: candleData[candleData.length - 1].x },
+                fill: { color: '#0ea5e9', opacity: 0.1 }
+            },
+            toolbar: { show: false },
+            background: 'transparent',
+            fontFamily: 'inherit'
+        },
+        theme: { mode: 'dark' },
+        colors: ['#0ea5e9'],
+        stroke: { width: 0 },
+        dataLabels: { enabled: false },
+        xaxis: {
+            type: 'category',
+            labels: { show: false },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            labels: { show: false }
+        },
+        grid: { show: false }
+    };
+
+    var chartVolume = new ApexCharts(document.querySelector("#volumeChart"), optionsVolume);
+    chartVolume.render();
 
     async function toggleWatchlist(symbol) {
         const btn = document.getElementById('watchlistBtn');
