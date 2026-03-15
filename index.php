@@ -15,236 +15,162 @@ if(isset($_SESSION["user_id"])) {
     <title>StoXVision | Next-Gen AI Market Analysis</title>
     <meta name="description" content="AI-powered stock analysis for the Indian Market. Real-time data, predictive modeling, and premium interface.">
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Custom Style -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#020617',
+                        primary: '#0ea5e9',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #38bdf8;
-            --primary-rgb: 56, 189, 248;
-            --secondary: #10b981;
-            --secondary-rgb: 16, 185, 129;
-            --bg-dark: #020617;
-            --purple-glow: rgba(139, 92, 246, 0.15);
+        body { background-color: #020617; }
+        .text-glow {
+            text-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
         }
-
-        body.landing {
-            background: var(--bg-dark);
-            overflow-x: hidden;
-        }
-
-        .gradient-sphere {
-            position: fixed;
-            width: 1000px;
-            height: 1000px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%);
-            z-index: -1;
-            top: -500px;
-            right: -300px;
-            pointer-events: none;
-        }
-
-        .hero-section {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 80px 20px;
-            position: relative;
-        }
-
-        .hero-badge {
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            padding: 8px 16px;
-            border-radius: 100px;
-            color: var(--primary);
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 30px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            backdrop-filter: blur(10px);
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .hero-title {
-            font-size: clamp(3rem, 10vw, 6rem);
-            font-weight: 900;
-            text-align: center;
-            line-height: 1.1;
-            margin-bottom: 25px;
-            background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: fadeInUp 1s ease-out 0.2s backwards;
-        }
-
-        .hero-title span {
-            background: linear-gradient(90deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-desc {
-            max-width: 700px;
-            text-align: center;
-            font-size: clamp(1.1rem, 2vw, 1.4rem);
-            color: #94a3b8;
-            margin-bottom: 40px;
-            line-height: 1.6;
-            animation: fadeInUp 1s ease-out 0.4s backwards;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 20px;
-            animation: fadeInUp 1s ease-out 0.6s backwards;
-        }
-
-        .btn-premium {
-            padding: 18px 40px;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .btn-primary-glass {
-            background: var(--primary);
-            color: #000;
-            box-shadow: 0 20px 40px -10px rgba(56, 189, 248, 0.5);
-        }
-
-        .btn-primary-glass:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 25px 50px -10px rgba(56, 189, 248, 0.7);
-        }
-
-        .btn-secondary-glass {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-secondary-glass:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-        }
-
-        .market-visual {
-            margin-top: 80px;
-            width: 100%;
-            max-width: 1200px;
-            height: 400px;
-            background: linear-gradient(180deg, rgba(56, 189, 248, 0.05) 0%, transparent 100%);
-            border: 1px solid rgba(56, 189, 248, 0.1);
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            animation: fadeInUp 1.2s ease-out 0.8s backwards;
-        }
-
-        .visual-placeholder {
-            color: rgba(255, 255, 255, 0.1);
-            font-size: 5rem;
-            font-weight: 900;
-            letter-spacing: 10px;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Floating particles */
-        .particles span {
-            position: absolute;
-            background: var(--primary);
-            border-radius: 50%;
-            filter: blur(2px);
-            opacity: 0.3;
-            animation: float 20s infinite linear;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-100px) translateX(100px); }
-            100% { transform: translateY(0) translateX(0); }
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
     </style>
 </head>
 
-<body class="landing">
+<body class="font-sans text-slate-300 selection:bg-primary selection:text-dark overflow-x-hidden">
 
-<div class="gradient-sphere"></div>
-
-<div class="particles">
-    <span style="width: 10px; height: 10px; top: 20%; left: 10%; animation-delay: 0s;"></span>
-    <span style="width: 15px; height: 15px; top: 60%; left: 80%; animation-delay: 2s;"></span>
-    <span style="width: 8px; height: 8px; top: 10%; left: 70%; animation-delay: 4s;"></span>
-    <span style="width: 12px; height: 12px; top: 80%; left: 20%; animation-delay: 6s;"></span>
-</div>
-
-<main class="hero-section">
-    <div class="hero-badge">
-        <i class="fas fa-bolt"></i> Powered by Advanced Neural Networks
-    </div>
-    
-    <h1 class="hero-title">
-        The Future of <br><span>Stock Analysis</span>
-    </h1>
-    
-    <p class="hero-desc">
-        Unleash high-precision analysis for the Indian Market. StoXVision combines real-time data with AI-driven predictive modeling to give you the ultimate trading edge.
-    </p>
-
-    <div class="hero-actions">
-        <?php if(isset($_SESSION["user_id"])): ?>
-            <a href="dashboard.php" class="btn-premium btn-primary-glass">
-                Back to Dashboard <i class="fas fa-arrow-right"></i>
-            </a>
-        <?php else: ?>
-            <a href="register.php" class="btn-premium btn-primary-glass">
-                Get Started Free <i class="fas fa-user-plus"></i>
-            </a>
-            <a href="login.php" class="btn-premium btn-secondary-glass">
-                Sign In <i class="fas fa-sign-in-alt"></i>
-            </a>
-        <?php endif; ?>
+    <!-- Global Background Elements -->
+    <div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+        <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 blur-[150px] rounded-full"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-accent/10 blur-[150px] rounded-full"></div>
     </div>
 
-    <div class="market-visual">
-        <div class="visual-placeholder">STOXVision</div>
-        <!-- In a real world this would be a Lottie or interactive chart -->
-    </div>
-</main>
+    <!-- Navigation -->
+    <nav class="glass-nav fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="text-2xl font-black text-white tracking-tighter italic">
+                StoX<span class="text-primary">Vision</span>
+            </div>
+            <div class="flex items-center gap-8">
+                <a href="login.php" class="text-sm font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">Sign In</a>
+                <a href="register.php" class="bg-white text-dark font-black px-6 py-2.5 rounded-xl hover:scale-105 transition-transform">GET STARTED</a>
+            </div>
+        </div>
+    </nav>
 
-<footer style="padding: 40px; text-align: center; color: #475569; font-size: 0.9rem;">
-    &copy; <?php echo date("Y"); ?> StoXVision AI. Precision Engineering for Market Mastery.
-</footer>
+    <!-- Hero Section -->
+    <main class="relative pt-32 pb-20 px-6">
+        <div class="max-w-7xl mx-auto text-center space-y-10">
+            
+            <div class="inline-flex items-center gap-3 px-6 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-xs font-black tracking-[0.2em] uppercase animate-in fade-in slide-in-from-top-4 duration-1000">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                Neural Market Engine v4.0 Active
+            </div>
+
+            <h1 class="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter italic leading-[0.9] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+                THE FUTURE <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary to-accent text-glow">OF ANALYSIS</span>
+            </h1>
+
+            <p class="max-w-3xl mx-auto text-lg md:text-xl text-slate-400 font-bold leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+                StoXVision merges real-time financial telemetry with advanced neural modeling to provide 
+                institutional-grade intelligence for the Indian equity markets.
+            </p>
+
+
+            <!-- Dashboard Preview Visual -->
+            <div class="relative mt-24 max-w-5xl mx-auto group animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-700">
+                <div class="absolute -inset-4 bg-gradient-to-br from-primary/30 to-accent/30 blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div class="relative bg-dark/60 backdrop-blur-3xl border border-white/5 rounded-[48px] overflow-hidden aspect-video shadow-2xl">
+                    <!-- Symbolic Dashboard Interface -->
+                    <div class="absolute inset-0 p-8 flex flex-col">
+                        <div class="flex items-center justify-between mb-8">
+                            <div class="flex gap-4">
+                                <div class="w-12 h-4 bg-white/10 rounded-full"></div>
+                                <div class="w-20 h-4 bg-white/10 rounded-full"></div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-white/10"></div>
+                        </div>
+                        <div class="flex-1 grid grid-cols-3 gap-6">
+                            <div class="bg-white/5 rounded-3xl p-6 border border-white/5">
+                                <div class="w-1/2 h-2 bg-primary/20 rounded-full mb-4"></div>
+                                <div class="w-full h-8 bg-white/5 rounded-xl"></div>
+                            </div>
+                            <div class="bg-white/5 rounded-3xl p-6 border border-white/5">
+                                <div class="w-1/2 h-2 bg-secondary/20 rounded-full mb-4"></div>
+                                <div class="w-full h-8 bg-white/5 rounded-xl"></div>
+                            </div>
+                            <div class="bg-white/5 rounded-3xl p-6 border border-white/5">
+                                <div class="w-1/2 h-2 bg-accent/20 rounded-full mb-4"></div>
+                                <div class="w-full h-8 bg-white/5 rounded-xl"></div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex-1 bg-white/[0.02] rounded-[32px] border border-white/5 flex items-center justify-center">
+                            <i class="fas fa-chart-line text-8xl text-white/10"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Specs Section -->
+    <section class="py-32 px-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div class="p-10 bg-white/[0.02] border border-white/5 rounded-[40px] hover:border-primary/20 transition-colors">
+                <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-2xl text-primary mb-8">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white italic mb-4">AI ANALYTICS</h3>
+                <p class="font-bold text-slate-500 leading-relaxed uppercase text-xs tracking-widest">
+                    Proprietary algorithmic processing of real-time market data flows.
+                </p>
+            </div>
+            <div class="p-10 bg-white/[0.02] border border-white/5 rounded-[40px] hover:border-secondary/20 transition-colors">
+                <div class="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-2xl text-secondary mb-8">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white italic mb-4">REAL-TIME</h3>
+                <p class="font-bold text-slate-500 leading-relaxed uppercase text-xs tracking-widest">
+                    Ultra-low latency telemetry from the Indian Exchanges.
+                </p>
+            </div>
+            <div class="p-10 bg-white/[0.02] border border-white/5 rounded-[40px] hover:border-accent/20 transition-colors">
+                <div class="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center text-2xl text-accent mb-8">
+                    <i class="fas fa-dna"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white italic mb-4">NEURAL SYNC</h3>
+                <p class="font-bold text-slate-500 leading-relaxed uppercase text-xs tracking-widest">
+                    Personalized portfolio intelligence that evolves with your trading style.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-20 border-t border-white/5 text-center mt-20">
+        <div class="text-3xl font-black text-white tracking-tighter italic mb-8">
+            StoX<span class="text-primary">Vision</span>
+        </div>
+        <p class="text-slate-600 text-[10px] font-black uppercase tracking-[0.5em] mb-4">
+            PRECISION ENGINEERING FOR MARKET MASTERY
+        </p>
+        <p class="text-slate-600 text-[10px]">
+            &copy; <?php echo date("Y"); ?> StoXVision AI. All Systems Operational.
+        </p>
+    </footer>
 
 </body>
-</html>
+</html>

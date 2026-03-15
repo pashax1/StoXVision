@@ -36,7 +36,8 @@ class NewsService {
         $use_key = $config['api_key'] ?? $this->api_key;
         
         $url = "{$this->base_url}?function=NEWS_SENTIMENT&tickers={$clean_symbol}&apikey={$use_key}";
-        $response = @file_get_contents($url);
+        $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+        $response = @file_get_contents($url, false, $ctx);
         
         $result = null;
         if (!$response) {
@@ -94,7 +95,8 @@ class NewsService {
         $from = date("Y-m-d", strtotime("-30 days"));
         
         $url = "https://finnhub.io/api/v1/company-news?symbol={$fh_symbol}&from={$from}&to={$to}&token={$apiKey}";
-        $response = @file_get_contents($url);
+        $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+        $response = @file_get_contents($url, false, $ctx);
         if (!$response) return $this->getFallbackSentiment($symbol);
         
         $data = json_decode($response, true);

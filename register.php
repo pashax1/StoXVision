@@ -1,4 +1,5 @@
 <?php
+session_start();
 include "config/db.php";
 
 if(isset($_SESSION["user_id"])) {
@@ -12,25 +13,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
 
     if (empty($name) || empty($email) || empty($_POST["password"])) {
-        $error = "All fields are required.";
-    } elseif (!preg_match("/^[a-zA-Z0-9\s]+$/", $name)) {
-        $error = "Full Name can only contain letters, numbers, and spaces.";
+        $error = "All vectors required for profile generation.";
+    } elseif (!preg_match("/^[a-zA-Z]+$/", $name)) {
+        $error = "Name must be characters only (A-Z) for system registration.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Please enter a valid email address.";
+        $error = "Invalid uplink address (Email format incorrect).";
     } else {
-        $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-        if ($stmt) {
-            $stmt->bind_param("sss", $name, $email, $password);
-
-            if ($stmt->execute()) {
-                $_SESSION["registered"] = true;
-                header("Location: login.php");
-                exit();
-            } else {
-                $error = "This email is already associated with an account.";
+        try {
+            $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+            if ($stmt) {
+                $stmt->bind_param("sss", $name, $email, $password);
+                if ($stmt->execute()) {
+                    $_SESSION["registered"] = true;
+                    header("Location: login.php");
+                    exit();
+                } else {
+                    $error = "Registration failed. Database link unstable.";
+                }
             }
-        } else {
-            $error = "Database error. Please try again later.";
+        } catch (mysqli_sql_exception $e) {
+            if ($e->getCode() == 1062) {
+                $error = "Identity already exists in StoXVision vault.";
+            } else {
+                $error = "Critical error during profile synthesis.";
+            }
         }
     }
 }
@@ -40,159 +46,140 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account | StoXVision AI</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Synthesize | StoXVision AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#020617',
+                        primary: '#0ea5e9',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            background: #020617;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Outfit', sans-serif;
-            padding: 40px 20px;
-        }
-        .auth-container {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(20px);
+        body { background-color: #020617; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 50px;
-            border-radius: 32px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.5);
-            text-align: center;
-            animation: fadeIn 0.8s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .auth-logo {
-            font-size: 2.5rem;
-            font-weight: 900;
-            background: linear-gradient(90deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 5px;
-        }
-        .auth-subtitle {
-            color: #94a3b8;
-            margin-bottom: 40px;
-            font-size: 1rem;
-        }
-        .form-group {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            color: #cbd5e1;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            margin-left: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 16px 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            color: #fff;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        input:focus {
-            border-color: #38bdf8;
-            background: rgba(255, 255, 255, 0.06);
-            outline: none;
-            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
-        }
-        .btn-auth {
-            width: 100%;
-            padding: 16px;
-            background: #38bdf8;
-            border: none;
-            border-radius: 14px;
-            color: #000;
-            font-weight: 700;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn-auth:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(56, 189, 248, 0.4);
-        }
-        .auth-footer {
-            margin-top: 30px;
-            color: #64748b;
-            font-size: 0.95rem;
-        }
-        .auth-footer a {
-            color: #38bdf8;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .error-msg {
-            background: rgba(239, 68, 68, 0.1);
-            color: #f87171;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen p-6 overflow-hidden">
+    
+    <!-- Background Blobs -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full"></div>
+    </div>
 
-<div class="auth-container">
-    <div class="auth-logo">StoXVision</div>
-    <div class="auth-subtitle">Join the future of market analysis</div>
+    <div class="w-full max-w-md relative animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div class="glass-card p-10 rounded-[48px] shadow-2xl">
+            
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-black text-white tracking-tighter italic mb-2">StoX<span class="text-primary">Vision</span></h1>
+                <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Neural Profile Synthesis</p>
+            </div>
 
-    <?php if(isset($error)): ?>
-        <div class="error-msg">
-            <i class="fas fa-circle-exclamation"></i> <?php echo $error; ?>
-        </div>
-    <?php endif; ?>
+            <?php if(isset($error)): ?>
+            <div class="mb-6 bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-red-500 text-xs font-bold flex items-center gap-3 animate-pulse">
+                <i class="fas fa-microchip"></i>
+                <?php echo $error; ?>
+            </div>
+            <?php endif; ?>
 
-    <form method="POST">
-        <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" name="name" placeholder="John Doe" required autofocus pattern="[a-zA-Z0-9\s]+" title="Only alphanumeric characters and spaces allowed">
-        </div>
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Full Identity</label>
+                    <div class="relative group">
+                        <i class="fas fa-user-tag absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-primary transition-colors"></i>
+                        <input type="text" id="regName" name="name" placeholder="Full Name" required autofocus
+                               pattern="[A-Za-z ]+" title="Alphabets and spaces only"
+                               oninput="this.value=this.value.replace(/[^a-zA-Z ]/g,'')"
+                               class="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-6 py-4 text-white font-bold focus:outline-none focus:border-primary transition-all">
+                    </div>
+                    <p class="mt-2 text-[9px] text-slate-600 font-bold uppercase tracking-widest pl-1">Letters and spaces only &mdash; no numbers or symbols</p>
+                </div>
 
-        <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" name="email" placeholder="john@example.com" required>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Uplink Address</label>
+                    <div class="relative group">
+                        <i class="fas fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-primary transition-colors"></i>
+                        <input type="email" name="email" placeholder="Email Address" required autocomplete="username"
+                               class="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-6 py-4 text-white font-bold focus:outline-none focus:border-primary transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Encryption Key</label>
+                    <div class="relative group">
+                        <i class="fas fa-shield-cat absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-primary transition-colors"></i>
+                        <input type="password" name="password" id="regPassword" placeholder="••••••••" required minlength="6" autocomplete="new-password"
+                               class="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white font-bold focus:outline-none focus:border-primary transition-all">
+                        <button type="button" id="toggleRegPassword" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-dark font-black py-4 rounded-2xl tracking-tighter text-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-3 group">
+                    SYNTHESIZE <i class="fas fa-dna text-sm group-hover:rotate-180 transition-transform duration-700"></i>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-8 border-t border-white/5 text-center">
+                <p class="text-slate-500 text-xs font-bold">ALREADY REGISTERED? <a href="login.php" class="text-primary hover:underline ml-2 uppercase">Log In</a></p>
+            </div>
         </div>
         
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" placeholder="••••••••" required minlength="6">
+        <div class="mt-8 text-center text-slate-600 text-[10px] font-black uppercase tracking-[0.3em] opacity-50">
+            &copy; 2026 StoXVision • Neural Engine v4.0.2
         </div>
-
-        <button type="submit" class="btn-auth">
-            Create Account <i class="fas fa-user-plus"></i>
-        </button>
-    </form>
-
-    <div class="auth-footer">
-        Already have an account? <a href="login.php">Log In Here</a>
     </div>
-</div>
 
+    <script>
+        // Name field: block non-alpha characters (belt-and-suspenders beyond oninput attr)
+        const regName = document.getElementById('regName');
+        if (regName) {
+            regName.addEventListener('keypress', function(e) {
+                if (!/[a-zA-Z ]/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+            regName.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                const cleaned = text.replace(/[^a-zA-Z ]/g, '');
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.slice(0, start) + cleaned + this.value.slice(end);
+                this.setSelectionRange(start + cleaned.length, start + cleaned.length);
+            });
+        }
+
+        // Password toggle
+        document.getElementById('toggleRegPassword').addEventListener('click', function() {
+            const pwd = document.getElementById('regPassword');
+            const icon = this.querySelector('i');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    </script>
 </body>
 </html>

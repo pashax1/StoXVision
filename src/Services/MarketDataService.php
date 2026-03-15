@@ -34,24 +34,51 @@ class MarketDataService {
             }
         }
 
-        // 2. Fetch from API with automatic rotation
-        $keys = $config['api_keys'] ?? [$this->api_key];
+        // 2. Fetch from API with automatic rotation from Database
+        $db_keys = [];
+        if ($conn) {
+            // Priority: active keys with least usage today
+            $today = date('Y-m-d');
+            $key_res = $conn->query("SELECT id, api_key, usage_count, last_reset FROM api_keys WHERE status = 'active' ORDER BY usage_count ASC, last_used ASC");
+            if ($key_res) {
+                while($row = $key_res->fetch_assoc()) {
+                    // Daily reset check
+                    if ($row['last_reset'] !== $today) {
+                        $kid = $row['id'];
+                        $conn->query("UPDATE api_keys SET usage_count = 0, last_reset = '$today' WHERE id = $kid");
+                        $row['usage_count'] = 0;
+                    }
+                    $db_keys[] = $row;
+                }
+            }
+        }
+        
+        if (empty($db_keys)) {
+            $db_keys = [['id' => 0, 'api_key' => $this->api_key, 'usage_count' => 0]];
+        }
+
         $last_error = "";
-        $startIndex = $_SESSION['current_key_idx'] ?? 0;
-        $keyCount = count($keys);
-
         $success_data = null;
-        $is_rate_limit = false;
 
-        for ($i = 0; $i < $keyCount; $i++) {
-            $idx = ($startIndex + $i) % $keyCount;
-            $key = $keys[$idx];
+        foreach ($db_keys as $k_row) {
+            $key_id = $k_row['id'];
+            $key = $k_row['api_key'];
+            $usage = $k_row['usage_count'];
+
+            // Alpha Vantage Free Tier limit is ~25 per day (effectively 5/min)
+            if ($usage >= 24) { // Conservative buffer
+                if ($conn && $key_id > 0) {
+                    $conn->query("UPDATE api_keys SET status = 'rate_limited' WHERE id = $key_id");
+                }
+                continue;
+            }
             
             $url = "{$this->base_url}?function=TIME_SERIES_DAILY&symbol={$symbol}&apikey={$key}";
-            $response = @file_get_contents($url);
+            $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+            $response = @file_get_contents($url, false, $ctx);
 
             if (!$response) {
-                $last_error = "Connection failed";
+                $last_error = "Connection failed for key " . substr($key, 0, 4) . "***";
                 continue;
             }
 
@@ -59,40 +86,34 @@ class MarketDataService {
 
             // Handle API Rate Limits
             if (isset($data["Note"]) && strpos($data["Note"], "frequency") !== false) {
-                $last_error = "Frequency limit (5/min). Retrying next key...";
-                $_SESSION['current_key_idx'] = ($idx + 1) % $keyCount;
+                $last_error = "Frequency limit (5/min). Skipping...";
                 continue;
             }
 
             if ((isset($data["Note"]) && strpos($data["Note"], "daily") !== false) || 
                 (isset($data["Information"]) && strpos($data["Information"], "25 requests per day") !== false)) {
-                $is_rate_limit = true;
-                $last_error = "Daily API limit reached on key " . substr($key, 0, 4) . "***";
-                $_SESSION['current_key_idx'] = ($idx + 1) % $keyCount;
+                $last_error = "Daily limit hit on " . substr($key, 0, 4) . "***";
+                if ($conn && $key_id > 0) {
+                    $conn->query("UPDATE api_keys SET status = 'rate_limited', usage_count = 25 WHERE id = $key_id");
+                }
                 continue; 
             }
 
-            // Handle Invalid Symbols specifically
-            if (isset($data["Error Message"]) || (isset($data["Information"]) && strpos($data["Information"], "Invalid API call") !== false)) {
-                $last_error = "Invalid symbol: $symbol. Please check the ticker.";
-                break; // Don't try 10 keys for an invalid symbol!
+            if (isset($data["Error Message"])) {
+                $last_error = "Invalid symbol: $symbol.";
+                break;
             }
 
             if (!isset($data["Time Series (Daily)"])) {
-                if (isset($data["Information"])) {
-                    $last_error = "API Info: " . $data["Information"];
-                } elseif (isset($data["Note"])) {
-                    $last_error = "API Note: " . $data["Note"];
-                } else {
-                    $last_error = "Market data not available for $symbol.";
-                }
+                $last_error = "Market data unavailable for $symbol.";
                 continue;
             }
 
             // Success!
             $success_data = $data;
-            $_SESSION['current_key_idx'] = $idx;
-            $config['api_key'] = $key;
+            if ($conn && $key_id > 0) {
+                $conn->query("UPDATE api_keys SET last_used = NOW(), usage_count = usage_count + 1 WHERE id = $key_id");
+            }
             $this->api_key = $key;
             break;
         }
@@ -160,7 +181,8 @@ class MarketDataService {
         $from = $to - (60 * 60 * 24 * 60); // 60 days of data
         $url = "https://finnhub.io/api/v1/stock/candle?symbol={$fh_symbol}&resolution=D&from={$from}&to={$to}&token={$apiKey}";
         
-        $response = @file_get_contents($url);
+        $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+        $response = @file_get_contents($url, false, $ctx);
         if (!$response) return null;
         
         $data = json_decode($response, true);
@@ -201,7 +223,7 @@ class MarketDataService {
         $count = 0;
         foreach ($time_series as $date => $values) {
             if ($count == 50) break; // Get 50 days for EMA 50
-            $dates[] = date("M d", strtotime($date));
+            $dates[] = $date;
             $opens[] = floatval($values["1. open"]);
             $closes[] = floatval($values["4. close"]);
             $volumes[] = intval($values["5. volume"]);

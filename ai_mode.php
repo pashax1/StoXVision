@@ -2,38 +2,40 @@
 include "config/db.php";
 include "includes/auth_check.php";
 
-$pageTitle = "AI Mode | StoXVision";
+$pageTitle = "Neural Engine | StoXVision AI";
 $currentPage = "ai_mode";
 
 include "includes/header.php";
 ?>
 
-<div style="text-align: center; padding: 100px 20px; animation: fadeIn 0.8s ease-out;">
-    <div style="font-size: 5rem; color: var(--primary); margin-bottom: 30px; filter: drop-shadow(0 0 20px var(--primary-glow));">
-        <i class="fas fa-robot"></i>
+<div class="flex flex-col items-center justify-center py-32 text-center space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
+    <div class="relative">
+        <div class="absolute inset-0 bg-primary/20 blur-[60px] rounded-full animate-pulse"></div>
+        <div class="relative w-32 h-32 bg-white/5 border border-white/10 rounded-[40px] flex items-center justify-center text-6xl text-primary shadow-2xl">
+            <i class="fas fa-brain animate-bounce"></i>
+        </div>
     </div>
-    <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 15px;">Neural Engine Offline</h1>
-    <p style="color: var(--text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto 40px;">
-        We are currently calibrating the advanced AI models for deep market sentiment analysis. This feature will be available shortly.
-    </p>
-    
-    <div style="display: inline-flex; align-items: center; gap: 15px; background: var(--glass); padding: 15px 30px; border-radius: 50px; border: 1px solid var(--glass-border);">
-        <div class="pulse" style="width: 12px; height: 12px; background: var(--secondary); border-radius: 50%; box-shadow: 0 0 10px var(--secondary);"></div>
-        <span style="font-weight: 600; font-size: 0.9rem; letter-spacing: 1px;">DEVELOPMENT IN PROGRESS</span>
-    </div>
-    <br><br>
-    <a href="dashboard.php" class="btn btn-primary" style="display: inline-flex; width: auto;">Return to Safety</a>
-</div>
 
-<style>
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.5); opacity: 0.5; }
-    100% { transform: scale(1); opacity: 1; }
-}
-.pulse {
-    animation: pulse 2s infinite;
-}
-</style>
+    <div class="space-y-4">
+        <h1 class="text-6xl font-black text-white tracking-tighter italic">NEURAL ENGINE <span class="text-primary">OFFLINE</span></h1>
+        <p class="max-w-xl mx-auto text-slate-500 font-bold text-lg leading-relaxed uppercase tracking-widest">
+            Calibrating advanced deep-learning models for sentiment synthesis. Interface unavailable during synaptic reset.
+        </p>
+    </div>
+
+    <div class="flex items-center gap-4 px-8 py-4 bg-white/[0.02] border border-white/5 rounded-full">
+        <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+        </span>
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Synaptic Calibration In Progress</span>
+    </div>
+
+    <div class="pt-10">
+        <a href="dashboard.php" class="inline-flex items-center gap-3 px-10 py-5 bg-white text-dark font-black rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl">
+            RETURN TO COMMAND CENTER <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
 
 <?php include "includes/footer.php"; ?>

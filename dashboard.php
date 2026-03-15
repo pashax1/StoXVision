@@ -11,10 +11,10 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 
-// Check if watchlist table exists (simple check for robustness)
+// Check if watchlist table exists
 $watchlist_preview = [];
 $res = $conn->query("SHOW TABLES LIKE 'watchlist'");
-if($res->num_rows > 0) {
+if($res && $res->num_rows > 0) {
     $stmt_w = $conn->prepare("SELECT symbol FROM watchlist WHERE user_id = ? ORDER BY added_at DESC LIMIT 3");
     $stmt_w->bind_param("i", $user_id);
     $stmt_w->execute();
@@ -22,7 +22,7 @@ if($res->num_rows > 0) {
     $watchlist_preview = $result_w->fetch_all(MYSQLI_ASSOC);
 }
 
-// Mock data (or Fetch from Cache)
+// Mock data (Integration point for real-time later)
 $nifty_price = "23,145.40";
 $nifty_change = "+0.85%";
 $sensex_price = "75,987.15";
@@ -31,60 +31,145 @@ $sensex_change = "+0.72%";
 include "includes/header.php";
 ?>
 
-<div style="margin-bottom: 40px;">
-    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 5px;">Welcome back, <?php echo htmlspecialchars($user['name']); ?>!</h1>
-    <p style="color: var(--text-secondary);">Here's what's happening in the Indian markets today.</p>
+<div class="mb-12 animate-in fade-in slide-in-from-bottom-5 duration-700">
+    <h1 class="text-4xl md:text-5xl font-black text-white mb-3">Welcome back, <?php echo htmlspecialchars($user['name']); ?>!</h1>
+    <p class="text-slate-400 text-lg">Here's your intelligence briefing for the Indian markets.</p>
 </div>
 
 <!-- Market Overview Cards -->
-<div class="market-overview">
-    <a href="index_stocks.php?type=nifty50" class="market-card up" style="border-left: 4px solid var(--secondary); text-decoration: none; display: block; transition: transform 0.2s ease;">
-        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: 700; letter-spacing: 1px;">NIFTY 50</div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-            <h3 style="margin:0;"><?php echo $nifty_price; ?></h3>
-            <div class="price-change" style="color: var(--secondary); font-weight: 800;">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    <a href="index_stocks.php?type=nifty50" class="group glass-panel p-6 rounded-3xl border-l-4 border-l-secondary hover:bg-white/5 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">NIFTY 50</div>
+        <div class="flex justify-between items-end">
+            <h3 class="text-2xl font-bold text-white"><?php echo $nifty_price; ?></h3>
+            <div class="text-secondary font-black flex items-center gap-1">
                 <i class="fas fa-caret-up"></i> <?php echo $nifty_change; ?>
             </div>
         </div>
     </a>
-    <a href="index_stocks.php?type=sensex" class="market-card up" style="border-left: 4px solid var(--secondary); text-decoration: none; display: block; transition: transform 0.2s ease;">
-        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: 700; letter-spacing: 1px;">SENSEX</div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-            <h3 style="margin:0;"><?php echo $sensex_price; ?></h3>
-            <div class="price-change" style="color: var(--secondary); font-weight: 800;">
+    
+    <a href="index_stocks.php?type=sensex" class="group glass-panel p-6 rounded-3xl border-l-4 border-l-secondary hover:bg-white/5 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">SENSEX</div>
+        <div class="flex justify-between items-end">
+            <h3 class="text-2xl font-bold text-white"><?php echo $sensex_price; ?></h3>
+            <div class="text-secondary font-black flex items-center gap-1">
                 <i class="fas fa-caret-up"></i> <?php echo $sensex_change; ?>
             </div>
         </div>
     </a>
-    <div class="market-card" style="border-left: 4px solid var(--accent);">
-        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: 700; letter-spacing: 1px;">TOP SECTOR</div>
-        <h3 style="margin:0;">ENERGY</h3>
-        <div style="color: var(--accent); font-size: 0.8rem; font-weight: 800; margin-top: 5px;">
-            <i class="fas fa-chart-line"></i> BULLISH BIAS
+
+    <div class="glass-panel p-6 rounded-3xl border-l-4 border-l-accent">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">MARKET BIAS</div>
+        <h3 class="text-2xl font-bold text-white">BULLISH</h3>
+        <div class="text-accent text-xs font-bold mt-1 flex items-center gap-2">
+            <i class="fas fa-chart-line"></i> UPWARD MOMENTUM
         </div>
     </div>
 </div>
 
 <!-- Search Section -->
-<div class="search-wrapper">
-    <h2><i class="fas fa-magnifying-glass-chart" style="color:var(--primary); margin-right:10px;"></i>Analyze Any Stock</h2>
-    <p>Type a company name or ticker — we'll find it for you.</p>
+<div class="glass-panel p-8 md:p-12 rounded-[40px] mb-12 relative overflow-hidden">
+    <div class="absolute top-0 right-0 p-8 text-primary/10 text-8xl">
+        <i class="fas fa-magnifying-glass-chart"></i>
+    </div>
+    
+    <div class="relative z-10 max-w-2xl">
+        <h2 class="text-3xl font-black text-white mb-4 flex items-center gap-4">
+            <span class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl">
+                <i class="fas fa-wand-magic-sparkles"></i>
+            </span>
+            Analyze Any Stock
+        </h2>
+        <p class="text-slate-400 mb-8 italic text-lg leading-relaxed">Instantly retrieve technical signals, predictive scoring, and deep market sentiment for any NSE/BSE symbol.</p>
 
-    <form class="search-form" method="POST" action="analyze.php" id="stockSearchForm" autocomplete="off">
-        <input type="hidden" name="symbol" id="symbolHidden">
-        <div class="autocomplete-wrapper">
-            <input type="text" id="stockSearchInput" placeholder="E.g. Infosys, Reliance, HDFC Bank, TCS...">
-            <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+        <form class="flex flex-col md:flex-row gap-4 mb-8" method="POST" action="analyze.php" id="stockSearchForm" autocomplete="off">
+            <input type="hidden" name="symbol" id="symbolHidden">
+            <div class="relative flex-grow">
+                <input type="text" id="stockSearchInput" 
+                    placeholder="E.g. Infosys, Reliance, HDFC..."
+                    class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all text-lg">
+                <div class="absolute left-0 right-0 top-full mt-2 bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden z-50 transition-all" id="autocompleteDropdown"></div>
+            </div>
+            <button type="submit" class="bg-primary hover:bg-primary/90 text-dark font-black px-10 py-4 rounded-2xl transition-all flex items-center justify-center gap-3 whitespace-nowrap shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95">
+               Analyze <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="flex flex-wrap gap-6 text-sm">
+            <span class="flex items-center gap-2 text-slate-400"><i class="fas fa-check-circle text-secondary"></i> 150+ Symbols</span>
+            <span class="flex items-center gap-2 text-slate-400"><i class="fas fa-check-circle text-secondary"></i> Real-time AI</span>
+            <span class="flex items-center gap-2 text-slate-400"><i class="fas fa-check-circle text-secondary"></i> Technical Signals</span>
         </div>
-        <button type="submit" class="btn btn-primary" id="analyzeBtn">
-            <i class="fas fa-wand-magic-sparkles"></i> Analyze Now
-        </button>
-    </form>
+    </div>
+</div>
 
-    <div class="search-hints">
-        <span><i class="fas fa-circle-check" style="color:var(--secondary);"></i> Type any name: "Tata", "HDFC", "Wipro"</span>
-        <span><i class="fas fa-circle-check" style="color:var(--secondary);"></i> Or paste a ticker: "TCS.NS", "SBIN.BO"</span>
-        <span><i class="fas fa-circle-check" style="color:var(--secondary);"></i> 150+ Indian stocks supported</span>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Watchlist Preview -->
+    <div class="glass-panel p-8 rounded-[32px]">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-bookmark text-primary"></i> Quick Watchlist
+            </h3>
+            <a href="portfolio.php" class="text-sm font-bold text-primary hover:underline">View Portfolio</a>
+        </div>
+        
+        <?php if (empty($watchlist_preview)): ?>
+            <div class="py-12 text-center">
+                <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-600">
+                    <i class="fas fa-folder-open text-2xl"></i>
+                </div>
+                <p class="text-slate-500 max-w-[200px] mx-auto text-sm leading-relaxed">Your list is currently empty. Bookmark stocks to see them here.</p>
+            </div>
+        <?php else: ?>
+            <div class="space-y-4">
+                <?php foreach ($watchlist_preview as $item): ?>
+                    <div class="flex justify-between items-center p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:bg-primary group-hover:text-dark transition-all">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <div class="font-black text-white tracking-wider"><?php echo htmlspecialchars($item['symbol']); ?></div>
+                                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Added Recently</div>
+                            </div>
+                        </div>
+                        <form method="POST" action="analyze.php" class="m-0">
+                            <input type="hidden" name="symbol" value="<?php echo $item['symbol']; ?>">
+                            <button type="submit" class="text-xs font-bold text-slate-400 hover:text-white transition-colors border border-white/10 rounded-lg px-4 py-2 hover:bg-white/10">Analyze</button>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Insights Panel -->
+    <div class="glass-panel p-8 rounded-[32px]">
+        <h3 class="text-xl font-bold text-white mb-8 flex items-center gap-3">
+             <i class="fas fa-bolt text-accent"></i> Market Insights
+        </h3>
+        
+        <div class="space-y-8">
+            <div class="flex gap-5 group">
+                <div class="w-12 h-12 flex-shrink-0 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-dark transition-all duration-500">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-1">Growth Momentum</h4>
+                    <p class="text-sm text-slate-400 leading-relaxed italic">Market strength continues across mid-cap sectors as FII data turns positive for the week.</p>
+                </div>
+            </div>
+
+            <div class="flex gap-5 group">
+                <div class="w-12 h-12 flex-shrink-0 rounded-2xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-dark transition-all duration-500">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-1">System Strategy</h4>
+                    <p class="text-sm text-slate-400 leading-relaxed italic">High RSI crossovers detected in banking stocks. Watch for breakout confirmations on 1HR charts.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -101,7 +186,7 @@ include "includes/header.php";
         const q = this.value.trim();
         clearTimeout(debounceTimer);
         dropdown.innerHTML = '';
-        dropdown.classList.remove('open');
+        dropdown.classList.add('hidden');
 
         if (q.length < 1) return;
 
@@ -111,53 +196,48 @@ include "includes/header.php";
                 .then(results => {
                     dropdown.innerHTML = '';
                     if (!results.length) {
-                        // Show fallback — try as raw ticker
                         const el = document.createElement('div');
-                        el.className = 'ac-item ac-fallback';
-                        el.innerHTML = `<span class="ac-name">Search for "<b>${q}</b>"</span><span class="ac-sector">Custom Symbol</span>`;
+                        el.className = 'px-6 py-4 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 group';
+                        el.innerHTML = `<div class="font-bold text-white group-hover:text-primary transition-colors">Search for "${q}"</div><div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Custom Symbol</div>`;
                         el.addEventListener('click', () => {
                             hidden.value = q;
                             input.value  = q.toUpperCase();
-                            dropdown.classList.remove('open');
+                            dropdown.classList.add('hidden');
                         });
                         dropdown.appendChild(el);
-                        dropdown.classList.add('open');
+                        dropdown.classList.remove('hidden');
                         return;
                     }
 
                     results.forEach(stock => {
                         const el = document.createElement('div');
-                        el.className = 'ac-item';
+                        el.className = 'px-6 py-4 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 group flex justify-between items-center';
                         el.innerHTML = `
-                            <div class="ac-left">
-                                <span class="ac-ticker">${stock.symbol.replace('.NS','').replace('.BO','')}</span>
-                                <span class="ac-name">${stock.name}</span>
+                            <div>
+                                <div class="font-black text-white tracking-wider group-hover:text-primary transition-colors">${stock.symbol.replace('.NS','').replace('.BO','')}</div>
+                                <div class="text-xs text-slate-500">${stock.name}</div>
                             </div>
-                            <span class="ac-sector">${stock.sector}</span>`;
+                            <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md">${stock.sector}</div>`;
                         el.addEventListener('click', () => {
                             hidden.value = stock.symbol;
                             input.value  = stock.name + ' (' + stock.symbol + ')';
-                            dropdown.classList.remove('open');
+                            dropdown.classList.add('hidden');
                             form.submit();
                         });
                         dropdown.appendChild(el);
                     });
-                    dropdown.classList.add('open');
+                    dropdown.classList.remove('hidden');
                 })
                 .catch(() => {});
         }, 200);
     });
 
-    // Allow free-type submit — resolve on server side
     form.addEventListener('submit', function(e) {
         let val = input.value.trim();
-        if (!hidden.value) {
-            hidden.value = val;
-        }
+        if (!hidden.value) hidden.value = val;
         
-        // Strict alphanumeric + dot + hyphen check
         if (!/^[a-zA-Z0-9\.\-]+$/.test(hidden.value)) {
-            alert("Invalid symbol. Please use only letters, numbers, dots, and hyphens.");
+            alert("Oops! Symbol must be alphanumeric (TCS, RELIANCE.NS, etc)");
             e.preventDefault();
             return;
         }
@@ -165,70 +245,13 @@ include "includes/header.php";
         if (!hidden.value) { e.preventDefault(); }
     });
 
-    // Close dropdown on outside click
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.autocomplete-wrapper')) {
-            dropdown.classList.remove('open');
+        if (!e.target.closest('#stockSearchForm')) {
+            dropdown.classList.add('hidden');
         }
-    });
-
-    // Hover effect for index cards
-    document.querySelectorAll('.market-card').forEach(card => {
-        card.addEventListener('mouseenter', () => card.style.transform = 'translateY(-3px)');
-        card.addEventListener('mouseleave', () => card.style.transform = 'translateY(0)');
     });
 })();
 </script>
-
-<div class="content-grid">
-    <div style="background: var(--glass); border: 1px solid var(--glass-border); padding: 30px; border-radius: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="margin: 0;">Quick Watchlist</h3>
-            <a href="portfolio.php" style="color: var(--primary); font-size: 0.85rem; text-decoration: none;">View All</a>
-        </div>
-        
-        <?php if (empty($watchlist_preview)): ?>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Your watchlist is currently empty. Bookmark stocks in your analysis to see them here.</p>
-        <?php else: ?>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <?php foreach ($watchlist_preview as $item): ?>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-chart-line" style="color: var(--primary); font-size: 0.8rem;"></i>
-                            <span style="font-weight: 600; font-size: 0.9rem;"><?php echo $item['symbol']; ?></span>
-                        </div>
-                        <form method="POST" action="analyze.php" style="margin: 0;">
-                            <input type="hidden" name="symbol" value="<?php echo $item['symbol']; ?>">
-                            <button type="submit" class="btn btn-outline" style="width: auto; padding: 4px 10px; font-size: 0.75rem;">Analyze</button>
-                        </form>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
-
-    <div style="background: var(--glass); border: 1px solid var(--glass-border); padding: 30px; border-radius: 24px;">
-        <h3 style="margin-bottom: 20px;">Market Insights</h3>
-        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(14, 165, 233, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fas fa-rocket"></i>
-            </div>
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Growth Momentum</h4>
-                <p style="color: var(--text-secondary); font-size: 0.85rem;">Indian indices hit new life-time highs as global sentiments improve.</p>
-            </div>
-        </div>
-        <div style="display: flex; gap: 15px;">
-            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245, 158, 11, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fas fa-lightbulb"></i>
-            </div>
-            <div>
-                <h4 style="margin: 0 0 5px 0;">Strategy Alert</h4>
-                <p style="color: var(--text-secondary); font-size: 0.85rem;">Identify mid-cap stocks with high RSI crossovers for short-term breakouts.</p>
-            </div>
-        </div>
-    </div>
-</div>
 
 <?php 
 include "includes/footer.php";

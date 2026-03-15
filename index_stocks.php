@@ -37,34 +37,26 @@ include "includes/header.php";
 
 <div class="index-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
     <?php foreach ($stocks as $stock): ?>
-        <div class="stock-card glass" style="padding: 24px; border-radius: 20px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 15px; transition: transform 0.3s ease, border-color 0.3s ease;">
+        <div class="stock-card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <span style="display: block; font-size: 0.75rem; color: var(--primary); font-weight: 700; margin-bottom: 4px;"><?php echo htmlspecialchars($stock['sector']); ?></span>
-                    <h3 style="margin: 0; font-size: 1.25rem;"><?php echo htmlspecialchars($stock['name']); ?></h3>
-                    <code style="color: var(--text-secondary); font-size: 0.85rem;"><?php echo htmlspecialchars($stock['symbol']); ?></code>
+                    <span class="sector-label"><?php echo htmlspecialchars($stock['sector']); ?></span>
+                    <h3><?php echo htmlspecialchars($stock['name']); ?></h3>
+                    <code class="symbol-code"><?php echo htmlspecialchars($stock['symbol']); ?></code>
                 </div>
-                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(56, 189, 248, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                <div class="card-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
             </div>
-            <form method="POST" action="analyze.php" style="margin-top: auto;">
+            <form method="POST" action="analyze.php" class="btn-analyze">
                 <input type="hidden" name="symbol" value="<?php echo $stock['symbol']; ?>">
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                <button type="submit" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">
                     <i class="fas fa-wand-magic-sparkles"></i> Analyze
                 </button>
             </form>
         </div>
     <?php endforeach; ?>
 </div>
-
-<style>
-.stock-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--primary);
-    box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.2);
-}
-</style>
 
 <?php 
 include "includes/footer.php";

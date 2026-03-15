@@ -10,7 +10,7 @@ $user_id = $_SESSION["user_id"];
 // Fetch watchlist items
 $watchlist = [];
 $resCheck = $conn->query("SHOW TABLES LIKE 'watchlist'");
-if($resCheck->num_rows > 0) {
+if($resCheck && $resCheck->num_rows > 0) {
     $stmt = $conn->prepare("SELECT symbol, added_at FROM watchlist WHERE user_id = ? ORDER BY added_at DESC");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -23,52 +23,69 @@ if($resCheck->num_rows > 0) {
 include "includes/header.php";
 ?>
 
-<div style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
+<div class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
     <div>
-        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 5px;">My Portfolio</h1>
-        <p style="color: var(--text-secondary);">Track and monitor your favorite Indian stocks.</p>
+        <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-2">My Portfolio</h1>
+        <p class="text-slate-400 text-lg">Your curated collection of market intelligence.</p>
     </div>
-    <a href="dashboard.php" class="btn btn-primary" style="padding: 10px 20px;">
+    <a href="dashboard.php" class="bg-primary hover:bg-primary/90 text-dark font-black px-8 py-4 rounded-2xl transition-all flex items-center gap-3 shadow-lg shadow-primary/20">
         <i class="fas fa-plus"></i> Add New Stock
     </a>
 </div>
 
 <?php if (empty($watchlist)): ?>
-    <div style="background: var(--glass); border: 1px solid var(--glass-border); padding: 60px; border-radius: 24px; text-align: center;">
-        <i class="fas fa-folder-open" style="font-size: 3rem; color: var(--glass-border); margin-bottom: 20px;"></i>
-        <h3>Your portfolio is empty</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 20px;">Start searching and adding stocks to your watchlist for quick tracking.</p>
-        <a href="dashboard.php" class="btn btn-outline" style="display: inline-block;">Explore Markets</a>
+    <div class="glass-panel p-20 rounded-[48px] text-center border-dashed border-white/10">
+        <div class="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8 text-slate-600">
+            <i class="fas fa-chart-pie text-4xl"></i>
+        </div>
+        <h3 class="text-2xl font-black text-white mb-4">Your portfolio is silent</h3>
+        <p class="text-slate-500 max-w-md mx-auto mb-8 italic">Start analyzing stocks and bookmark them to keep track of their neural predictions here.</p>
+        <a href="dashboard.php" class="inline-block bg-white/5 text-white font-bold px-10 py-4 rounded-2xl hover:bg-white/10 transition-colors border border-white/5">Explore Markets</a>
     </div>
 <?php else: ?>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <?php foreach ($watchlist as $item): ?>
-            <div class="market-card" style="display: flex; flex-direction: column; gap: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <span style="color: var(--primary); font-size: 0.75rem; font-weight: 600;"><?php echo $item['symbol']; ?></span>
-                        <h3 style="margin: 0;"><?php echo str_replace(".NS", "", $item['symbol']); ?></h3>
-                    </div>
-                    <form method="POST" action="analyze.php" style="margin:0">
-                        <input type="hidden" name="symbol" value="<?php echo $item['symbol']; ?>">
-                        <button type="submit" class="btn btn-outline" style="width: auto; padding: 5px 12px; font-size: 0.8rem;">
-                            Analyze
-                        </button>
-                    </form>
+            <div class="glass-panel p-8 rounded-[36px] flex flex-col justify-between group hover:border-primary/30 transition-all transform hover:-translate-y-2 relative overflow-hidden">
+                <div class="absolute -top-6 -right-6 text-6xl text-white/5 transform rotate-12 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-bookmark"></i>
                 </div>
                 
-                <div style="font-size: 0.8rem; color: var(--text-secondary); border-top: 1px solid var(--glass-border); padding-top: 10px; display: flex; justify-content: space-between;">
-                    <span>Added on: <?php echo date("d M", strtotime($item['added_at'])); ?></span>
-                    <a href="javascript:void(0)" onclick="removeStock('<?php echo $item['symbol']; ?>', this)" style="color: #ef4444; text-decoration: none;">Remove</a>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span class="text-[10px] font-black text-primary uppercase tracking-widest mb-1 italic">Bookmarked Asset</span>
+                            <h3 class="text-3xl font-black text-white tracking-tighter"><?php echo str_replace([".BSE", ".NS"], "", $item['symbol']); ?></h3>
+                            <code class="text-xs text-slate-500 font-mono mt-1 block tracking-wider uppercase"><?php echo htmlspecialchars($item['symbol']); ?></code>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-xs text-slate-500 mb-8 pb-8 border-b border-white/5">
+                        <i class="far fa-clock"></i>
+                        <span>Added on <?php echo date("M d, Y", strtotime($item['added_at'])); ?></span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <form method="POST" action="analyze.php" class="flex-grow m-0">
+                        <input type="hidden" name="symbol" value="<?php echo $item['symbol']; ?>">
+                        <button type="submit" class="w-full bg-white/5 hover:bg-primary hover:text-dark text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 border border-white/5 hover:border-primary">
+                            <i class="fas fa-bolt text-xs"></i> Analyze
+                        </button>
+                    </form>
+                    <button onclick="removeStock('<?php echo $item['symbol']; ?>', this)" 
+                        class="w-14 h-14 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20 active:scale-90">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
 
     <script>
-    async function removeStock(symbol, el) {
-        if(!confirm('Remove ' + symbol + ' from watchlist?')) return;
+    async function removeStock(symbol, btn) {
+        if(!confirm('Permanently remove ' + symbol + ' from your portfolio?')) return;
         
+        btn.disabled = true;
         try {
             const formData = new FormData();
             formData.append('symbol', symbol);
@@ -76,11 +93,17 @@ include "includes/header.php";
             const data = await res.json();
             
             if (data.status === 'success') {
-                el.closest('.market-card').remove();
-                if(document.querySelectorAll('.market-card').length == 0) location.reload();
+                const card = btn.closest('.glass-panel');
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    card.remove();
+                    if(document.querySelectorAll('.glass-panel').length == 0) location.reload();
+                }, 300);
             }
         } catch (e) {
             console.error(e);
+            btn.disabled = false;
         }
     }
     </script>
