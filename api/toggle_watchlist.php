@@ -1,6 +1,14 @@
 <?php
 include "../config/db.php";
 
+// #8 CSRF validation
+$incoming_csrf = $_POST['csrf_token'] ?? '';
+if ($incoming_csrf !== ($_SESSION['csrf_token'] ?? '')) {
+    http_response_code(403);
+    echo json_encode(["status" => "error", "message" => "Invalid security token. Refresh and try again."]);
+    exit();
+}
+
 if (!isset($_SESSION["user_id"]) || !isset($_POST["symbol"])) {
     echo json_encode(["status" => "error", "message" => "Unauthorized"]);
     exit();

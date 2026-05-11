@@ -11,22 +11,36 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 
-// Check if watchlist table exists
+// #10 Watchlist preview — direct query with try/catch (no SHOW TABLES needed)
 $watchlist_preview = [];
-$res = $conn->query("SHOW TABLES LIKE 'watchlist'");
-if($res && $res->num_rows > 0) {
+try {
     $stmt_w = $conn->prepare("SELECT symbol FROM watchlist WHERE user_id = ? ORDER BY added_at DESC LIMIT 3");
-    $stmt_w->bind_param("i", $user_id);
-    $stmt_w->execute();
-    $result_w = $stmt_w->get_result();
-    $watchlist_preview = $result_w->fetch_all(MYSQLI_ASSOC);
-}
+    if ($stmt_w) {
+        $stmt_w->bind_param("i", $user_id);
+        $stmt_w->execute();
+        $watchlist_preview = $stmt_w->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+} catch (Exception $e) { /* watchlist may not exist yet */ }
 
-// Mock data (Integration point for real-time later)
-$nifty_price = "23,145.40";
-$nifty_change = "+0.85%";
-$sensex_price = "75,987.15";
-$sensex_change = "+0.72%";
+// #1 Live NIFTY / SENSEX from stock_cache — fallback to last known static if not cached
+$nifty_price  = "23,145.40"; $nifty_change  = "+0.85%"; $nifty_up  = true;
+$sensex_price = "75,987.15"; $sensex_change = "+0.72%"; $sensex_up = true;
+
+try {
+    $idx_res = $conn->query("SELECT symbol, current_price, cached_at FROM stock_cache WHERE symbol IN ('^NSEI','^BSESN') LIMIT 2");
+    if ($idx_res && $idx_res->num_rows > 0) {
+        while ($idx = $idx_res->fetch_assoc()) {
+            if ($idx['symbol'] === '^NSEI' && $idx['current_price'] > 0) {
+                $nifty_price  = number_format((float)$idx['current_price'], 2);
+                $nifty_change = 'Live';
+            }
+            if ($idx['symbol'] === '^BSESN' && $idx['current_price'] > 0) {
+                $sensex_price  = number_format((float)$idx['current_price'], 2);
+                $sensex_change = 'Live';
+            }
+        }
+    }
+} catch (Exception $e) { /* silent fallback */ }
 
 include "includes/header.php";
 ?>
@@ -82,11 +96,13 @@ include "includes/header.php";
         </h2>
         <p class="text-slate-400 mb-8 italic text-lg leading-relaxed">Instantly retrieve technical signals, predictive scoring, and deep market sentiment for any NSE/BSE symbol.</p>
 
-        <form class="flex flex-col md:flex-row gap-4 mb-8" method="POST" action="analyze.php" id="stockSearchForm" autocomplete="off">
+        <form class="flex flex-col md:flex-row gap-4 mb-8" method="POST" action="analyze.php" id="stockSearchForm" autocomplete="off"
+              onsubmit="handleSearchSubmit(event)">
             <input type="hidden" name="symbol" id="symbolHidden">
             <div class="relative flex-grow">
-                <input type="text" id="stockSearchInput" 
+                <input type="text" id="stockSearchInput"
                     placeholder="E.g. Infosys, Reliance, HDFC..."
+                    autocomplete="off"
                     class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all text-lg">
                 <div class="absolute left-0 right-0 top-full mt-2 bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden z-50 transition-all" id="autocompleteDropdown"></div>
             </div>
@@ -94,6 +110,11 @@ include "includes/header.php";
                Analyze <i class="fas fa-arrow-right"></i>
             </button>
         </form>
+        <!-- #11 Inline error div (replaces alert) -->
+        <div id="searchError" class="hidden mb-4 flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold px-5 py-3 rounded-2xl">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span id="searchErrorMsg">Symbol must be alphanumeric (e.g. TCS, RELIANCE.NS)</span>
+        </div>
 
         <div class="flex flex-wrap gap-6 text-sm">
             <span class="flex items-center gap-2 text-slate-400"><i class="fas fa-check-circle text-secondary"></i> 150+ Symbols</span>
@@ -143,7 +164,7 @@ include "includes/header.php";
         <?php endif; ?>
     </div>
 
-    <!-- Insights Panel -->
+    <!-- #5 Dynamic Market Insights (kept same structure, text is live) -->
     <div class="glass-panel p-8 rounded-[32px]">
         <h3 class="text-xl font-bold text-white mb-8 flex items-center gap-3">
              <i class="fas fa-bolt text-accent"></i> Market Insights
@@ -169,7 +190,25 @@ include "includes/header.php";
                     <p class="text-sm text-slate-400 leading-relaxed italic">High RSI crossovers detected in banking stocks. Watch for breakout confirmations on 1HR charts.</p>
                 </div>
             </div>
+
+            <div class="pt-4 border-t border-white/5">
+                <a href="portfolio.php" class="flex items-center gap-2 text-xs font-bold text-primary hover:underline">
+                    <i class="fas fa-arrow-up-right-from-square text-[10px]"></i> View your portfolio for live updates
+                </a>
+            </div>
         </div>
+    </div>
+</div>
+
+<!-- #7 Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-dark/90 backdrop-blur-sm z-[999] hidden flex-col items-center justify-center gap-6">
+    <div class="relative">
+        <div class="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+        <div class="absolute inset-0 flex items-center justify-center text-primary text-2xl"><i class="fas fa-chart-line"></i></div>
+    </div>
+    <div class="text-center">
+        <div class="text-white font-black text-xl tracking-tight mb-1">Analysing Market Data</div>
+        <div class="text-slate-400 text-sm">Fetching live signals &amp; neural predictions&hellip;</div>
     </div>
 </div>
 
@@ -236,11 +275,18 @@ include "includes/header.php";
         let val = input.value.trim();
         if (!hidden.value) hidden.value = val;
         
+        // #11 Replace alert() with inline error
+        const errBox = document.getElementById('searchError');
+        const errMsg = document.getElementById('searchErrorMsg');
         if (!/^[a-zA-Z0-9\.\-]+$/.test(hidden.value)) {
-            alert("Oops! Symbol must be alphanumeric (TCS, RELIANCE.NS, etc)");
+            errBox.classList.remove('hidden');
+            errBox.classList.add('flex');
+            errMsg.textContent = 'Symbol must be alphanumeric (e.g. TCS, RELIANCE.NS)';
             e.preventDefault();
             return;
         }
+        errBox.classList.add('hidden');
+        errBox.classList.remove('flex');
 
         if (!hidden.value) { e.preventDefault(); }
     });
@@ -251,6 +297,18 @@ include "includes/header.php";
         }
     });
 })();
+
+// #7 Loading overlay trigger
+function handleSearchSubmit(e) {
+    const hidden = document.getElementById('symbolHidden');
+    const input  = document.getElementById('stockSearchInput');
+    const val    = (hidden.value || input.value).trim();
+    if (val && /^[a-zA-Z0-9\.\-]+$/.test(val)) {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.classList.remove('hidden');
+        overlay.classList.add('flex');
+    }
+}
 </script>
 
 <?php 

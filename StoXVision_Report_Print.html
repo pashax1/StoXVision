@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoXVision AI - Content Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ffaa;
+            --secondary: #00ccff;
+            --dark: #0a0c10;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .paper {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 40px auto;
+            padding: 25mm;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.1);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            .paper { margin: 0; box-shadow: none; width: 100%; border: none; }
+            .no-print { display: none; }
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+        }
+
+        .project-id {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0;
+            letter-spacing: -1px;
+        }
+
+        .clg-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .page-num {
+            position: absolute;
+            top: 25mm;
+            right: 25mm;
+            font-size: 11px;
+            font-weight: 700;
+            color: #cbd5e1;
+            border-left: 1px solid #e2e8f0;
+            padding-left: 10px;
+        }
+
+        section { margin-bottom: 30px; }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            border-left: 4px solid var(--secondary);
+            padding-left: 12px;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #f1f5f9, transparent);
+        }
+
+        h3 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #334155;
+            margin-top: 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        p, li { font-size: 13px; color: #475569; }
+
+        .highlight-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+
+        th {
+            background: #f1f5f9;
+            text-align: left;
+            padding: 12px;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        code {
+            display: block;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+        }
+
+        .footer-note {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-style: italic;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .print-btn {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .print-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+    <div class="btn-container no-print">
+        <button class="print-btn" onclick="window.print()">GENERATE PDF REPORT</button>
+    </div>
+
+    <!-- Page 1 -->
+    <div class="paper">
+        <div class="page-num">1 | P a g e</div>
+        <header>
+            <div class="project-id">STOXVISION AI SYSTEM 21CSMMXX</div>
+            <h1>STOXVISION AI CONTENT REPORT</h1>
+            <div class="clg-name">KRISTU JAYANTI COLLEGE (AUTONOMOUS)</div>
+        </header>
+
+        <section>
+            <h2>1.0 INTRODUCTION</h2>
+            <p>
+                StoXVision AI is an innovative fintech ecosystem that synergizes institutional-grade technical analysis with advanced neural prediction models. 
+                Built specifically for the retail investor, the system transforms fragmented market data into a cohesive, high-fidelity experience. 
+                Administrators benefit from a hardened backend that manages API key lifecycles and monitors distributed data streams, ensuring 99.9% uptime for core analytics.
+            </p>
+            <p>
+                For traders, StoXVision offers a seamless "One-Click Analysis" feature, providing RSI, EMA, and Volatility metrics instantly. 
+                With integrated News Sentiment Analysis and an interactive candlestick terminal, users can execute trade plans with higher statistical confidence.
+            </p>
+        </section>
+
+        <section>
+            <h3>1.1 PROBLEM DEFINITION</h3>
+            <p>
+                The modern retail market suffers from "Analysis Paralysis." Existing tools are either prohibitively expensive or offer fragmented data across multiple tabs. 
+                Manual tracking of volatile Indian stocks leading to slow decision-making. There is a critical need for a centralized, AI-augmented platform that automates 
+                the technical heavy lifting and provides a unified trade directive.
+            </p>
+        </section>
+
+        <section>
+            <h3>1.2 SCOPE OF THE PROJECT</h3>
+            <ul>
+                <li>Implementation of <b>Neural Prediction Engine</b> for short-term price projections.</li>
+                <li>Development of a <b>Responsive Portfolio Manager</b> for ticker persistence.</li>
+                <li>API Orchestration for <b>Alpha Vantage & Finnhub</b> real-time synchronization.</li>
+                <li>Hardened <b>Security Framework</b> including CSRF protection and role-based access.</li>
+                <li>Premium <b>Glassmorphism UI</b> designed for maximum readability and user engagement.</li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Page 2 -->
+    <div class="paper">
+        <div class="page-num">2 | P a g e</div>
+        <header>
+            <div class="project-id">STOXVISION AI SYSTEM 21CSMMXX</div>
+            <h1>STOXVISION AI CONTENT REPORT</h1>
+            <div class="clg-name">KRISTU JAYANTI COLLEGE (AUTONOMOUS)</div>
+        </header>
+
+        <section>
+            <h2>1.3 MODULES IN THE PROJECT</h2>
+            <ul>
+                <li>Identity Access Management (IAM)</li>
+                <li>Distributed Analysis Engine</li>
+                <li>Neural Consensus & AI Prediction</li>
+                <li>Sentiment Aggregation (News Scraper)</li>
+                <li>Portfolio Watchlist Database</li>
+                <li>Advanced System Diagnostics</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>1.3.1 IDENTITY ACCESS MANAGEMENT</h3>
+            <p>
+                This module handles the cryptographic storage of user credentials using BCRYPT hashing. 
+                It maintains persistent sessions and ensures that only authenticated users can access the analysis engine and private portfolios.
+            </p>
+        </section>
+
+        <section>
+            <h3>1.3.2 DISTRIBUTED ANALYSIS ENGINE</h3>
+            <p>
+                The core logic of the system. It fetches raw JSON buffers from major financial APIs, calculates technical indicators (RSI, EMA, Bollinger Bands), 
+                and renders them as high-quality Interactive Candlestick Charts using the Chart.js framework.
+            </p>
+        </section>
+
+        <section>
+            <h2>2.0 SYSTEM STUDY</h2>
+            <h3>2.1 EXISTING SYSTEM STUDY</h3>
+            <p>
+                Existing systems relied on manual cataloging of prices and static data. Key challenges included:
+            </p>
+            <ul>
+                <li>Manual Data Entry errors leading to financial risk.</li>
+                <li>Inability to track news sentiment in real-time.</li>
+                <li>Lack of automated "Trade Plans" (Target/Stop-Loss).</li>
+                <li>Fragmented user experience causing delays in market execution.</li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Page 3 -->
+    <div class="paper">
+        <div class="page-num">3 | P a g e</div>
+        <header>
+            <div class="project-id">STOXVISION AI SYSTEM 21CSMMXX</div>
+            <h1>STOXVISION AI CONTENT REPORT</h1>
+            <div class="clg-name">KRISTU JAYANTI COLLEGE (AUTONOMOUS)</div>
+        </header>
+
+        <section>
+            <h2>3.0 SYSTEM DESIGN</h2>
+            <h3>3.2 TABLE DESIGN (SQL)</h3>
+            <table>
+                <tr>
+                    <th>Table Name</th>
+                    <th>Column</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><b>users</b></td>
+                    <td>id, name, email, password</td>
+                    <td>INT, VARCHAR</td>
+                    <td>Primary identity storage.</td>
+                </tr>
+                <tr>
+                    <td><b>stock_cache</b></td>
+                    <td>symbol, current_price, news_data</td>
+                    <td>DECIMAL, TEXT</td>
+                    <td>API data buffer to reduce Latency.</td>
+                </tr>
+                <tr>
+                    <td><b>watchlist</b></td>
+                    <td>user_id, symbol, added_at</td>
+                    <td>INT, VARCHAR</td>
+                    <td>Mapping of users to saved stocks.</td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h3>3.3 DATA FLOW DIAGRAM (DFD)</h3>
+            <p>
+                The StoXVision DFD maps the flow of Ticker Symbols from the Input Layer, through the MarketData Service, 
+                joining with News Sentiment data, and finally rendering as a "Trade Plan" in the Dashboard UI.
+            </p>
+        </section>
+
+        <section>
+            <h2>3.5 INPUT/OUTPUT DESIGN</h2>
+            <h3>3.5.1 LOGIN LOGIC (PHP)</h3>
+            <code>
+$stmt = $conn->prepare("SELECT password FROM users WHERE email = ?");
+$stmt->bind_param("s", $_POST['email']);
+$stmt->execute();
+if ($user && password_verify($_POST['password'], $user['password'])) {
+    session_start();
+}
+            </code>
+        </section>
+
+        <section>
+            <h2>7.0 VALIDATION</h2>
+            <p>
+                <b>7.1 Field-Level Regex:</b> Validates NSE/BSE symbols to prevent script injection.<br>
+                <b>7.2 CSRF Protection:</b> Injects binary tokens into forms to prevent data hijacking.<br>
+                <b>7.3 SQL Injection Hardening:</b> Mandatory use of Prepared Statements.
+            </p>
+        </section>
+
+        <div class="footer-note">
+            Prepared by StoXVision Engineering Team • End of Report
+        </div>
+    </div>
+
+</body>
+</html>

@@ -44,25 +44,27 @@ if(isset($_POST['symbol'])) {
         
         $report = $reportService->generateReport($indicators, $symbol, $news_data);
 
-        $dates = $indicators['dates'];
-        $opens = $indicators['opens'];
-        $highs = $indicators['highs'];
-        $lows = $indicators['lows'];
+        $dates  = $indicators['dates'];
+        $opens  = $indicators['opens'];
+        $highs  = $indicators['highs'];
+        $lows   = $indicators['lows'];
         $closes = $indicators['closes'];
         $volumes = $indicators['chart_volumes'];
-        file_put_contents('chart_debug.log', json_encode($indicators['dates']));
-        $latest_price = $indicators['latest_price'];
-        $price_change = $indicators['price_change'];
+        // #9 / #15 Removed: file_put_contents debug log
+        $latest_price     = $indicators['latest_price'];
+        $price_change     = $indicators['price_change'];
         $price_change_pct = $indicators['price_change_pct'];
 
+        // #10 Direct watchlist check with try/catch
         $is_in_watchlist = false;
-        $res_wCheck = $conn->query("SHOW TABLES LIKE 'watchlist'");
-        if($res_wCheck && $res_wCheck->num_rows > 0) {
+        try {
             $stmt_w = $conn->prepare("SELECT id FROM watchlist WHERE user_id = ? AND symbol = ?");
-            $stmt_w->bind_param("is", $_SESSION["user_id"], $symbol);
-            $stmt_w->execute();
-            $is_in_watchlist = ($stmt_w->get_result()->num_rows > 0);
-        }
+            if ($stmt_w) {
+                $stmt_w->bind_param("is", $_SESSION["user_id"], $symbol);
+                $stmt_w->execute();
+                $is_in_watchlist = ($stmt_w->get_result()->num_rows > 0);
+            }
+        } catch (\Exception $ew) { /* table may not exist yet */ }
 
     } catch (\Exception $e) {
         $apiError = $e->getMessage();
@@ -75,8 +77,18 @@ if(isset($_POST['symbol'])) {
 $pageTitle = ($display_name ?? $symbol_raw) . " Analysis | StoXVision";
 $currentPage = "analysis";
 
-// TradingView Lightweight Charts CDN
-$extraHead = '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.js"></script><script src="https://cdn.jsdelivr.net/npm/luxon@3.4.3/build/global/luxon.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>';
+// #14 Meta + OG tags injected via extraHead
+$_meta_desc = htmlspecialchars(($display_name ?: $symbol_raw) . ' stock analysis — RSI, EMA, candlestick chart, AI prediction & trade plan on StoXVision.');
+$_og_title  = htmlspecialchars(($display_name ?: $symbol_raw) . ' | StoXVision AI Analysis');
+$extraHead  = '
+<meta name="description" content="' . $_meta_desc . '">
+<meta property="og:title" content="' . $_og_title . '">
+<meta property="og:description" content="' . $_meta_desc . '">
+<meta property="og:type" content="website">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.4.3/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>';
 
 include "includes/header.php";
 ?>
@@ -132,9 +144,13 @@ include "includes/header.php";
                 <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     <i class="fas fa-chart-line text-primary"></i> Professional Grade Technicals
                 </h3>
-                <div class="flex gap-2">
-                    <button class="px-4 py-2 bg-white/5 text-white text-xs font-bold rounded-xl border border-white/5 hover:bg-white/10 transition-all active:scale-95">1D</button>
-                    <button class="px-4 py-2 bg-primary/20 text-primary text-xs font-bold rounded-xl border border-primary/20">All Time</button>
+                <div class="flex gap-2" id="chartRangeBtns">
+                    <button data-range="1" onclick="chartSetRange(1, this)"
+                        class="range-btn px-4 py-2 bg-white/5 text-white text-xs font-bold rounded-xl border border-white/5 hover:bg-white/10 transition-all active:scale-95">1D</button>
+                    <button data-range="7" onclick="chartSetRange(7, this)"
+                        class="range-btn px-4 py-2 bg-white/5 text-white text-xs font-bold rounded-xl border border-white/5 hover:bg-white/10 transition-all active:scale-95">1W</button>
+                    <button data-range="0" onclick="chartSetRange(0, this)"
+                        class="range-btn px-4 py-2 bg-primary/20 text-primary text-xs font-bold rounded-xl border border-primary/20">All</button>
                 </div>
             </div>
             <div id="tradingview_chart" class="w-full rounded-2xl" style="height: 500px; min-height: 500px;"></div>
@@ -297,7 +313,8 @@ include "includes/header.php";
     const phpCloses = <?php echo json_encode(array_values($indicators['closes'])); ?>;
     const phpVols   = <?php echo json_encode(array_values($indicators['chart_volumes'])); ?>;
 
-    function buildCharts() {
+    // #4 Accept 'days' for range filter (0 = all, N = last N candles)
+    function buildCharts(days) {
         const container = document.getElementById('tradingview_chart');
         if (!container) return;
 
@@ -307,17 +324,20 @@ include "includes/header.php";
             return;
         }
 
-        // Build dataset — Chart.js financial expects {x, o, h, l, c}
-        const candleData = phpDates.map((d, i) => ({
+        // Build full dataset then slice by range
+        let allCandles = phpDates.map((d, i) => ({
             x: new Date(d).getTime(),
             o: parseFloat(phpOpens[i])  || 0,
             h: parseFloat(phpHighs[i])  || 0,
             l: parseFloat(phpLows[i])   || 0,
-            c: parseFloat(phpCloses[i]) || 0
+            c: parseFloat(phpCloses[i]) || 0,
+            vi: i
         })).filter(d => d.o && d.h && d.l && d.c);
 
+        const candleData = (days && days > 0) ? allCandles.slice(-days) : allCandles;
+
         const volColors = candleData.map(d => d.c >= d.o ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)');
-        const volData   = candleData.map((d, i) => ({ x: d.x, y: phpVols[i] || 0 }));
+        const volData   = candleData.map(d => ({ x: d.x, y: phpVols[d.vi !== undefined ? d.vi : 0] || 0 }));
 
         // Replace container with two stacked canvases
         container.innerHTML = '';
@@ -439,10 +459,13 @@ include "includes/header.php";
         });
     }
 
+    // Expose for timeframe buttons (#4)
+    window._buildCharts = buildCharts;
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', buildCharts);
+        document.addEventListener('DOMContentLoaded', () => buildCharts(0));
     } else {
-        buildCharts();
+        buildCharts(0);
     }
 })();
 
@@ -455,6 +478,8 @@ async function toggleWatchlist(symbol) {
     try {
         const formData = new FormData();
         formData.append('symbol', symbol);
+        // #8 Include CSRF token
+        formData.append('csrf_token', '<?php echo $_SESSION["csrf_token"] ?? ""; ?>');
         const res = await fetch('api/toggle_watchlist.php', { method: 'POST', body: formData });
         const data = await res.json();
         
@@ -471,6 +496,20 @@ async function toggleWatchlist(symbol) {
         console.error(e);
     } finally {
         btn.disabled = false;
+    }
+}
+
+// #4 Chart range filter — slices the full PHP dataset and re-renders
+function chartSetRange(days, btn) {
+    // Update button styles
+    document.querySelectorAll('.range-btn').forEach(b => {
+        b.className = 'range-btn px-4 py-2 bg-white/5 text-white text-xs font-bold rounded-xl border border-white/5 hover:bg-white/10 transition-all active:scale-95';
+    });
+    btn.className = 'range-btn px-4 py-2 bg-primary/20 text-primary text-xs font-bold rounded-xl border border-primary/20';
+
+    // Re-render — rebuild charts is defined in the IIFE scope, so we use the global rebuild helper
+    if (typeof window._buildCharts === 'function') {
+        window._buildCharts(days);
     }
 }
 </script>

@@ -1,0 +1,200 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>StoXVision AI Content Report</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>90</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+    @page {
+        size: 21cm 29.7cm;
+        margin: 2.5cm;
+    }
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        line-height: 1.5;
+        color: #000;
+    }
+    .header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        margin-bottom: 30px;
+        padding-bottom: 10px;
+    }
+    .project-title {
+        font-size: 24pt;
+        font-weight: bold;
+        margin: 20px 0;
+    }
+    .clg-name {
+        font-size: 14pt;
+        font-weight: bold;
+        color: #555;
+    }
+    h1 {
+        font-size: 16pt;
+        border-bottom: 1px solid #ccc;
+        margin-top: 30px;
+    }
+    h2 {
+        font-size: 14pt;
+        margin-top: 20px;
+        color: #2c3e50;
+    }
+    h3 {
+        font-size: 12pt;
+        font-weight: bold;
+        margin-top: 15px;
+        text-transform: uppercase;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+    th, td {
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    code {
+        display: block;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 10px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 10pt;
+        margin: 10px 0;
+    }
+    .page-break {
+        page-break-after: always;
+    }
+    .footer {
+        text-align: center;
+        font-size: 10pt;
+        margin-top: 30px;
+        color: #777;
+    }
+</style>
+</head>
+<body>
+
+    <!-- PAGE 1: TITLE PAGE -->
+    <div class="header">
+        <div style="font-size: 10pt; letter-spacing: 2pt;">STOXVISION AI SYSTEM 2026</div>
+        <div class="project-title">STOXVISION AI CONTENT REPORT</div>
+        <div class="clg-name">KRISTU JAYANTI COLLEGE (AUTONOMOUS)</div>
+        <div style="margin-top: 20px; font-weight: bold;">PREPARED BY: STOXVISION DEV TEAM</div>
+    </div>
+
+    <div class="section">
+        <h1>1.0 INTRODUCTION</h1>
+        <p>StoXVision AI is an advanced museum management system that transforms both administrative processes and visitor interactions. Administrators benefit from streamlined artifact management tools and precise user controls, ensuring data security and operational efficiency.</p>
+        <p>For visitors, StoXVision offers a seamless online ticket booking experience, eliminating queues and providing downloadable tickets for added convenience. With integrated payment security and a booking history feature, visitors can confidently plan and manage their museum visits.</p>
+        <p>StoXVision marks a new era in market analysis management, merging efficiency and convenience to create a captivating experience for administrators and visitors alike.</p>
+        
+        <h2>1.1 PROBLEM DEFINITION:</h2>
+        <p>Many systems face challenges with outdated management systems, leading to inefficiencies in data tracking and visitor services. Manual processes and limited online ticketing options hinder administrative tasks and visitor experience. There's a pressing need for a modern museum management solution to streamline operations, improve visitor services, and enhance revenue opportunities.</p>
+
+        <h2>1.2 SCOPE OF THE PROJECT:</h2>
+        <ul>
+            <li>Development of StoXVision: Creation of a comprehensive stock analysis system encompassing ticker tracking, user management, and AI prediction with secure integration.</li>
+            <li>Administrative Efficiency: Streamlining administrative tasks through intuitive user interfaces and efficient tracking functionalities to enhance operational efficiency.</li>
+            <li>Visitor Convenience: Providing visitors with a seamless and convenient experience, including downloadable analysis and a history feature for efficient planning.</li>
+        </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- PAGE 2 -->
+    <h1>1.3 MODULES IN THE PROJECT:</h1>
+    <ul>
+        <li>Admin and User Management</li>
+        <li>Analysis & Prediction Engine</li>
+        <li>Financial Data Integration</li>
+        <li>Portfolio Tracking</li>
+        <li>Reporting and Analytics</li>
+    </ul>
+
+    <h3>1.3.1 ADMIN AND USER MANAGEMENT</h3>
+    <p>This module facilitates the management of administrators and users within the StoXVision system. The module enables the admin and user to enter the email and password, gives access if the login details are correct.</p>
+
+    <h3>1.3.2 ANALYSIS & PREDICTION ENGINE</h3>
+    <p>This module allows visitors to analyze stock symbols through an online platform. Visitors can select preferred tickers, providing a convenient and streamlined booking experience. The reports would be generated in downloadable form.</p>
+
+    <h3>1.3.3 FINANCIAL DATA INTEGRATION</h3>
+    <p>This module integrates secure data gateways into the StoXVision system, enabling visitors to process market requests. It ensures the safety and reliability of data processing, enhancing visitor confidence.</p>
+
+    <h1>2.0 SYSTEM STUDY</h1>
+    <h2>2.1 EXISTING SYSTEM STUDY</h2>
+    <p>In existing systems, many users relied on traditional methods of data management and engagement. These methods often involved manual processes and outdated systems that presented various challenges:</p>
+    <ul>
+        <li>Manual Data Management: time-consuming and prone to errors.</li>
+        <li>Inefficient Analysis: resulting in long wait times for data updates.</li>
+        <li>Limited Integration: excluding those who preferred alternative data methods.</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <!-- PAGE 3 -->
+    <h1>3.0 SYSTEM DESIGN</h1>
+    <h2>3.2 TABLE DESIGN</h2>
+    <table>
+        <tr>
+            <th>Table Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>users</td>
+            <td>Identity</td>
+            <td>Stores registration and authentication details.</td>
+        </tr>
+        <tr>
+            <td>stock_cache</td>
+            <td>Data</td>
+            <td>Caches API responses to improve system performance.</td>
+        </tr>
+        <tr>
+            <td>watchlist</td>
+            <td>Private</td>
+            <td>Stores saved symbols per user ID.</td>
+        </tr>
+        <tr>
+            <td>api_keys</td>
+            <td>Admin</td>
+            <td>Manages API tokens and rate limiting.</td>
+        </tr>
+    </table>
+
+    <h1>3.5 INPUT/OUTPUT DESIGN</h1>
+    <h3>3.5.1 LOGIN SYSTEM CODE</h3>
+    <code>
+if ($user && password_verify($password, $user['password'])) {
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['name'] = $user['name'];
+    header("Location: dashboard.php");
+}
+    </code>
+
+    <h1>7.0 VALIDATION</h1>
+    <p><b>7.1 Field Validation:</b> Ensures that users enter only alphanumeric stock symbols.</p>
+    <p><b>7.2 Form validation:</b> Validates all inputs before submission to prevent SQL Injection.</p>
+    <p><b>7.3 Range Validation:</b> Ensures confidence scores fall within 0-100 range.</p>
+
+    <div class="footer">
+        StoXVision AI Content Report • Page 3 • Created at 2026
+    </div>
+
+</body>
+</html>

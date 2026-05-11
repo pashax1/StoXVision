@@ -41,7 +41,24 @@ class ReportService {
 
         // 5. Prediction
         $predicted_direction = ($trend == "Bullish") ? "Up" : (($trend == "Bearish") ? "Down" : "Sideways");
-        $confidence = ($rsi > 40 && $rsi < 60) ? 82 : 65;
+
+        // #3 Dynamic confidence score (base 40, max 100)
+        $confidence = 40;
+        // RSI in healthy momentum zone
+        if ($rsi >= 40 && $rsi <= 60) $confidence += 20;
+        elseif ($rsi >= 30 && $rsi <= 70) $confidence += 10;
+        // EMA alignment (price > ema20 > ema50 = bullish stack)
+        if (($price > $ema_20 && $ema_20 > $ema_50) || ($price < $ema_20 && $ema_20 < $ema_50)) $confidence += 20;
+        elseif ($price > $ema_20 || $price < $ema_20) $confidence += 10;
+        // Volume strength
+        $avg_vol_check = $indicators['avg_volume'] ?? 1;
+        if ($avg_vol_check > 0 && ($indicators['latest_volume'] / $avg_vol_check) > 1.2) $confidence += 10;
+        // News sentiment boost/penalty
+        if (!empty($news['sentiment'])) {
+            if ($news['sentiment'] === 'Positive') $confidence += 10;
+            elseif ($news['sentiment'] === 'Negative') $confidence -= 10;
+        }
+        $confidence = min(100, max(20, $confidence));
 
         // 6. Support & Resistance — using EMAs (more realistic than % heuristics)
         //    Support  = lower of EMA50 or current price * 0.95

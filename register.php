@@ -14,8 +14,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($name) || empty($email) || empty($_POST["password"])) {
         $error = "All vectors required for profile generation.";
-    } elseif (!preg_match("/^[a-zA-Z]+$/", $name)) {
-        $error = "Name must be characters only (A-Z) for system registration.";
+    } elseif (!preg_match("/^[a-zA-Z ]+$/", $name)) {
+        $error = "Name must be characters and spaces only for system registration.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid uplink address (Email format incorrect).";
     } else {

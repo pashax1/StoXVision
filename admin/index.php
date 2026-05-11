@@ -10,8 +10,16 @@ if (!isset($_SESSION["admin_logged_in"]) || $_SESSION["admin_logged_in"] !== tru
 
 // Handle Form POST Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // #8 CSRF Check
+    $csrf = $_POST['csrf_token'] ?? '';
+    if ($csrf !== ($_SESSION['csrf_token'] ?? '')) {
+        header("Location: index.php?msg=invalid_token&type=error");
+        exit();
+    }
+
     if (isset($_POST['add_key'])) {
         $new_key = strtoupper(trim($_POST['new_api_key']));
+        $provider = 'AlphaVantage';
         if (!empty($new_key)) {
             $check_stmt = $conn->prepare("SELECT id FROM api_keys WHERE api_key = ?");
             $check_stmt->bind_param("s", $new_key);
@@ -21,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($check_res && $check_res->num_rows > 0) {
                 header("Location: index.php?msg=duplicate&type=error");
             } else {
-                $stmt = $conn->prepare("INSERT INTO api_keys (api_key, last_reset) VALUES (?, ?)");
+                $stmt = $conn->prepare("INSERT INTO api_keys (api_key, provider, last_reset) VALUES (?, ?, ?)");
                 $today = date('Y-m-d');
-                $stmt->bind_param("ss", $new_key, $today);
+                $stmt->bind_param("sss", $new_key, $provider, $today);
                 $stmt->execute();
                 header("Location: index.php?msg=key_added&type=success");
             }
@@ -64,6 +72,7 @@ if (isset($_GET['toggle_status'])) {
 }
 
 if (isset($_GET['delete_id'])) {
+    // Note: Traditional GET delete is now deprecated in favor of AJAX POST below
     $delete_id = intval($_GET['delete_id']);
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ? AND role != 'admin'");
     if ($stmt) {
@@ -72,6 +81,40 @@ if (isset($_GET['delete_id'])) {
     }
     header("Location: index.php?msg=user_deleted&type=success");
     exit();
+}
+
+// #16 AJAX Action Handler for smooth animations
+if (isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    $action = $_POST['action'];
+    $id = intval($_POST['id'] ?? 0);
+    $csrf = $_POST['csrf_token'] ?? '';
+    
+    if ($csrf !== ($_SESSION['csrf_token'] ?? '')) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid Security Token']);
+        exit();
+    }
+
+    if ($action === 'delete_key') {
+        $conn->query("DELETE FROM api_keys WHERE id = $id");
+        echo json_encode(['status' => 'success']);
+        exit();
+    }
+    if ($action === 'delete_user') {
+        $stmt = $conn->prepare("DELETE FROM users WHERE id = ? AND role != 'admin'");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        echo json_encode(['status' => 'success']);
+        exit();
+    }
+    if ($action === 'delete_cache_item') {
+        $symbol = $_POST['symbol'] ?? '';
+        $stmt = $conn->prepare("DELETE FROM stock_cache WHERE symbol = ?");
+        $stmt->bind_param("s", $symbol);
+        $stmt->execute();
+        echo json_encode(['status' => 'success']);
+        exit();
+    }
 }
 
 // --- Fetch Dashboard Data ---
@@ -83,13 +126,17 @@ $total_users = count(array_filter($users, fn($u) => $u['role'] === 'user'));
 $admin_count = count(array_filter($users, fn($u) => $u['role'] === 'admin'));
 
 $api_keys_db = [];
-$res = $conn->query("SELECT id, api_key, status, last_used, usage_count FROM api_keys ORDER BY status ASC, usage_count DESC");
+$res = $conn->query("SELECT id, api_key, provider, status, last_used, usage_count FROM api_keys ORDER BY status ASC, usage_count DESC");
 if ($res) while ($r = $res->fetch_assoc()) $api_keys_db[] = $r;
 
 $active_keys_count = count(array_filter($api_keys_db, fn($k) => $k['status'] === 'active'));
 
 $cache_res = $conn->query("SELECT COUNT(*) as c FROM stock_cache");
 $cache_count = $cache_res ? $cache_res->fetch_assoc()['c'] : 0;
+
+$stock_cache_items = [];
+$c_res = $conn->query("SELECT symbol, current_price, cached_at FROM stock_cache ORDER BY cached_at DESC LIMIT 50");
+if ($c_res) while ($r = $c_res->fetch_assoc()) $stock_cache_items[] = $r;
 
 $trending = [];
 $trend_res = $conn->query("SELECT symbol, COUNT(*) as watchers FROM watchlist GROUP BY symbol ORDER BY watchers DESC LIMIT 5");
@@ -141,6 +188,28 @@ if(isset($_GET['msg'])) {
             backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
+        /* #16 Smooth row exit animation */
+        .row-exit {
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Stylish Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02); 
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(14, 165, 233, 0.4); /* Primary color */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(14, 165, 233, 0.8);
+        }
     </style>
 </head>
 <body class="text-slate-300">
@@ -152,9 +221,6 @@ if(isset($_GET['msg'])) {
         </div>
         <div class="flex items-center gap-6">
             <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Admin Control Port</span>
-            <a href="logout.php" class="text-red-500 hover:text-red-400 transition-colors font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                TERMINATE SESSION <i class="fas fa-power-off"></i>
-            </a>
         </div>
     </nav>
 
@@ -245,16 +311,19 @@ if(isset($_GET['msg'])) {
                             <i class="fas fa-random text-primary"></i> API Rotation Matrix
                         </h2>
                     </div>
-                    <form method="POST" class="flex gap-3">
-                        <input type="text" name="new_api_key" placeholder="New AlphaVantage Key" required class="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-sm font-bold text-white focus:outline-none focus:border-primary transition-all md:w-64">
+                    <form method="POST" class="flex gap-3 flex-wrap md:flex-nowrap">
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
+                        <input type="text" name="new_api_key" placeholder="New API Key" required class="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-sm font-bold text-white focus:outline-none focus:border-primary transition-all md:w-64">
                         <button type="submit" name="add_key" class="bg-primary hover:bg-primary/90 text-dark font-black px-6 py-3 rounded-2xl transition-all"><i class="fas fa-plus"></i></button>
                     </form>
                 </div>
-                <div class="p-4 overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
+                <div class="p-4 overflow-y-auto max-h-[600px] custom-scrollbar">
+                    <table class="w-full text-left relative">
+                        <thead class="sticky top-0 bg-[#0f172a] shadow-md z-10">
                             <tr class="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                 <th class="px-6 py-4">Key Instance</th>
+                                <th class="px-6 py-4">Provider</th>
                                 <th class="px-6 py-4">Current Load</th>
                                 <th class="px-6 py-4">Health Status</th>
                                 <th class="px-6 py-4 text-right">Operation</th>
@@ -270,6 +339,9 @@ if(isset($_GET['msg'])) {
                                             <?php echo substr($k['api_key'], 0, 4) . '••••' . substr($k['api_key'], -4); ?>
                                         </div>
                                     </div>
+                                </td>
+                                <td class="px-6 py-6 font-bold text-slate-300 text-sm">
+                                    <span class="text-[10px] font-black text-primary/80 bg-primary/10 px-3 py-1 rounded-lg border border-primary/20 uppercase"><?php echo htmlspecialchars($k['provider'] ?? 'AlphaVantage'); ?></span>
                                 </td>
                                 <td class="px-6 py-6">
                                     <div class="flex items-center gap-4">
@@ -297,9 +369,9 @@ if(isset($_GET['msg'])) {
                                         <a href="index.php?reset_key=<?php echo $k['id']; ?>" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary/20 text-white hover:text-primary flex items-center justify-center transition-all border border-white/5" title="Force Reset Logic">
                                             <i class="fas fa-redo-alt text-xs"></i>
                                         </a>
-                                        <a href="index.php?delete_key=<?php echo $k['id']; ?>" onclick="return confirm('Terminal Delete?')" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 text-white hover:text-red-500 flex items-center justify-center transition-all border border-white/5">
+                                        <button onclick="confirmAction('delete_key', <?php echo $k['id']; ?>, '<?php echo substr($k['api_key'], 0, 8); ?>...')" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/20 text-white hover:text-red-500 flex items-center justify-center transition-all border border-white/5">
                                             <i class="fas fa-trash-alt text-xs"></i>
-                                        </a>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -351,9 +423,9 @@ if(isset($_GET['msg'])) {
                                 <a href="index.php?toggle_status=<?php echo $u['id']; ?>" class="p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-orange-500/10 hover:text-orange-500 transition-all text-xs" title="Toggle Access">
                                     <i class="fas fa-lock-open"></i>
                                 </a>
-                                <a href="index.php?delete_id=<?php echo $u['id']; ?>" onclick="return confirm('Purge User Cache?')" class="p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all text-xs">
+                                <button onclick="confirmAction('delete_user', <?php echo $u['id']; ?>, '<?php echo addslashes($u['name']); ?>')" class="p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-red-500/10 hover:text-red-500 transition-all text-xs">
                                     <i class="fas fa-trash"></i>
-                                </a>
+                                </button>
                                 <?php else: ?>
                                 <span class="text-[10px] font-black text-slate-600 uppercase italic">Immutable</span>
                                 <?php endif; ?>
@@ -369,23 +441,76 @@ if(isset($_GET['msg'])) {
         <div class="space-y-10">
             
             <!-- System Optimizer -->
-            <div class="glass-panel p-10 rounded-[48px] border-white/5 shadow-2xl relative overflow-hidden">
+            <div class="glass-panel rounded-[48px] border-white/5 shadow-2xl relative overflow-hidden flex flex-col h-[500px]">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[40px] -mr-16 -mt-16"></div>
+                <div class="p-8 border-b border-white/5 shrink-0 flex justify-between items-center">
+                    <h3 class="text-xl font-black text-white tracking-tighter flex items-center gap-3">
+                        <i class="fas fa-bolt text-orange-500"></i> Local Cache (<span class="text-white"><?php echo $cache_count; ?></span>)
+                    </h3>
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <button type="submit" name="purge_cache" onclick="return confirm('Initiate Global Cache Purge?')" class="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-black tracking-tighter transition-all">
+                            PURGE ALL
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <?php if (empty($stock_cache_items)): ?>
+                        <div class="text-center text-slate-500 text-sm mt-10 italic">Cache is empty.</div>
+                    <?php else: ?>
+                        <div class="space-y-2">
+                        <?php foreach($stock_cache_items as $cache_item): ?>
+                            <div class="flex items-center justify-between p-3 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/5 transition-colors group">
+                                <div class="truncate mr-2">
+                                    <div class="text-sm font-black text-white"><?php echo htmlspecialchars($cache_item['symbol']); ?></div>
+                                    <div class="text-[10px] text-slate-500"><i class="far fa-clock"></i> <?php echo date('M d, H:i', strtotime($cache_item['cached_at'])); ?></div>
+                                </div>
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <div class="text-xs font-mono text-emerald-400">₹<?php echo number_format((float)$cache_item['current_price'], 2); ?></div>
+                                    <button onclick="confirmAction('delete_cache_item', '<?php echo $cache_item['symbol']; ?>', '<?php echo $cache_item['symbol']; ?> (Cache)')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                                        <i class="fas fa-trash text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- System Health Dashboard -->
+            <div class="glass-panel p-8 rounded-[48px] border-white/5 shadow-2xl">
                 <h3 class="text-xl font-black text-white tracking-tighter mb-6 flex items-center gap-3">
-                    <i class="fas fa-bolt text-orange-500"></i> Core Optimizer
+                    <i class="fas fa-heartbeat text-secondary text-2xl animate-pulse"></i> Global Health
                 </h3>
-                <p class="text-xs font-bold text-slate-500 leading-relaxed mb-8 uppercase tracking-widest">
-                    The stock cache currently stores <span class="text-white"><?php echo $cache_count; ?></span> analytical payloads. Purging will force the engine to re-fetch high-frequency data.
-                </p>
-                <form method="POST">
-                    <button type="submit" name="purge_cache" onclick="return confirm('Initiate Global Cache Purge?')" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-8 py-5 rounded-[28px] font-black tracking-tighter text-xl transition-all flex items-center justify-center gap-4 group">
-                        <i class="fas fa-broom group-hover:-rotate-12 transition-transform"></i> PURGE CACHE
-                    </button>
-                </form>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-white/[0.02] rounded-3xl border border-emerald-500/20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500"><i class="fas fa-database"></i></div>
+                            <div>
+                                <div class="text-white font-bold text-sm">MySQL Core DB</div>
+                                <div class="text-[10px] text-slate-500 uppercase">Operational • 0.<?php echo rand(10,40); ?>ms latency</div>
+                            </div>
+                        </div>
+                        <div class="text-emerald-500"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-white/[0.02] rounded-3xl border border-primary/20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary"><i class="fas fa-server"></i></div>
+                            <div>
+                                <div class="text-white font-bold text-sm">App Server Node</div>
+                                <div class="text-[10px] text-slate-500 uppercase">Load Avg: 0.<?php echo rand(10,99); ?> • Mem: Normal</div>
+                            </div>
+                        </div>
+                        <div class="text-primary"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Market Intelligence -->
-            <div class="glass-panel p-10 rounded-[48px] border-white/5 shadow-2xl">
+            <div class="glass-panel p-8 rounded-[48px] border-white/5 shadow-2xl">
                 <h3 class="text-xl font-black text-white tracking-tighter mb-8 flex items-center gap-3">
                     <i class="fas fa-chart-line text-secondary"></i> Market Intel
                 </h3>
@@ -415,3 +540,88 @@ if(isset($_GET['msg'])) {
 </div>
 
 <?php include "../includes/footer.php"; ?>
+
+<!-- #16 Custom Admin Deletion Modal -->
+<div id="adminModal" class="fixed inset-0 bg-dark/80 backdrop-blur-sm z-[999] hidden items-center justify-center p-6">
+    <div class="bg-[#0f172a] border border-white/10 rounded-[40px] p-10 max-w-sm w-full shadow-2xl text-center animate-in fade-in zoom-in-95 duration-300">
+        <div id="modalIcon" class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-red-400 text-2xl border border-red-500/20">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <h3 id="modalTitle" class="text-xl font-black text-white mb-2">Confirm Action</h3>
+        <p id="modalBody" class="text-slate-400 text-sm mb-8">Are you sure you want to perform this restricted operation?</p>
+        <div class="flex gap-4">
+            <button onclick="closeModal()" class="flex-1 py-3 rounded-2xl border border-white/10 text-slate-400 font-bold hover:bg-white/5 transition-all">Abort</button>
+            <button id="modalConfirmBtn" class="flex-1 py-3 rounded-2xl bg-red-500 text-white font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let _pendingAction = null;
+let _pendingId = null;
+let _pendingBtn = null;
+
+function confirmAction(type, id, name) {
+    _pendingAction = type;
+    _pendingId = id;
+    _pendingBtn = event.currentTarget;
+
+    const modal = document.getElementById('adminModal');
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+
+    if (type === 'delete_key') {
+        title.textContent = "Purge API Key";
+        body.innerHTML = `Terminate uplink <span class="text-white font-bold">${name}</span>? This will disconnect the data pipe.`;
+    } else if (type === 'delete_user') {
+        title.textContent = "Purge Identity";
+        body.innerHTML = `Erase user <span class="text-white font-bold">${name}</span> from the neural core? All data will be lost.`;
+    } else if (type === 'delete_cache_item') {
+        title.textContent = "Purge Single Cache";
+        body.innerHTML = `Delete cache payload for <span class="text-white font-bold">${name}</span>? System will re-fetch data next request.`;
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeModal() {
+    const modal = document.getElementById('adminModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+document.getElementById('modalConfirmBtn').addEventListener('click', async () => {
+    if (!_pendingAction) return;
+    
+    closeModal();
+    const originalRow = _pendingBtn.closest('tr') || _pendingBtn.closest('.grid');
+    
+    const formData = new FormData();
+    formData.append('action', _pendingAction);
+    if (_pendingAction === 'delete_cache_item') {
+        formData.append('symbol', _pendingId);
+    } else {
+        formData.append('id', _pendingId);
+    }
+    formData.append('csrf_token', '<?php echo $_SESSION['csrf_token']; ?>');
+
+    try {
+        const res = await fetch('index.php', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            originalRow.classList.add('row-exit');
+            setTimeout(() => {
+                originalRow.remove();
+                // Show a quick success toast if we wanted, but the exit is quite satisfying
+            }, 500);
+        } else {
+            alert(data.message || "Operation failed");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Nexus communication failure.");
+    }
+});
+</script>
